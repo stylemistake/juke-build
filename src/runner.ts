@@ -193,6 +193,12 @@ class Worker {
       const timeStr = chalk.magenta(time);
       logger.action(`Finished '${nameStr}' in ${timeStr}`);
     }
+    // Touch all targets so that they don't rebuild again
+    if (outputs.length > 0) {
+      for (const file of outputs) {
+        file.touch();
+      }
+    }
     this.emitter.emit('finish');
   };
 }
