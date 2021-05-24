@@ -1,0 +1,15 @@
+## NPM garbage
+node_modules
+*.log
+package-lock.json
+
+## Yarn stuff
+/.pnp.*
+/.yarn/*
+!/.yarn/releases
+!/.yarn/plugins
+!/.yarn/sdks
+!/.yarn/versions
+
+## Build artifacts
+/dist
