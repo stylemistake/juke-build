@@ -1,3 +1,4 @@
+import { logger } from '../logger';
 import { createParameter } from '../parameter';
 import { runner } from '../runner';
 import { createTarget } from '../target';
@@ -10,41 +11,41 @@ const DefineParameter = createParameter({
   alias: 'D',
 });
 
-const DmTarget = createTarget(_ => _
-  .name('dm')
-  .parameter(DefineParameter)
-  .executes(async ({ get }) => {
+const DmTarget = createTarget({
+  name: 'dm',
+  parameters: [DefineParameter],
+  executes: async ({ get }) => {
     const defines = get(DefineParameter);
     for (const define of defines) {
-      // ...
+      logger.info('Define:', define);
     }
     await sleep(1000);
-  })
-);
+  }
+});
 
-const TguiTarget = createTarget(_ => _
-  .name('tgui')
-  .executes(async () => {
+const TguiTarget = createTarget({
+  name: 'tgui',
+  executes: async () => {
     await sleep(750);
-  })
-);
+  },
+});
 
-const AfterTarget = createTarget(_ => _
-  .name('after')
-  .dependsOn(DmTarget)
-  .dependsOn(TguiTarget)
-  .executes(async ({ get }) => {
-
+const AfterTarget = createTarget({
+  name: 'after',
+  dependsOn: [DmTarget, TguiTarget],
+  executes: async () => {
     await sleep(500);
-  })
-);
+  },
+});
 
-const AllTarget = createTarget(_ => _
-  .name('all')
-  .dependsOn(DmTarget)
-  .dependsOn(TguiTarget)
-  .dependsOn(AfterTarget)
-);
+const AllTarget = createTarget({
+  name: 'all',
+  dependsOn: [
+    DmTarget,
+    TguiTarget,
+    AfterTarget,
+  ],
+});
 
 runner.register({
   parameters: [
@@ -52,6 +53,7 @@ runner.register({
   ],
   default: AllTarget,
   targets: [
+    AllTarget,
     DmTarget,
     TguiTarget,
     AfterTarget,

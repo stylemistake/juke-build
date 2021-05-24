@@ -4,73 +4,39 @@ import { Parameter } from './parameter';
 type BuildFn = (...args: any) => unknown;
 
 export type Target = {
-  name?: string;
+  name: string;
   dependsOn: Target[];
+  executes: BuildFn[];
   inputs: string[];
   outputs: string[];
-  executes: BuildFn[];
   parameters: Parameter[];
 };
 
-const createTargetBuilder = () => new TargetBuilder({
-  dependsOn: [],
-  inputs: [],
-  outputs: [],
-  executes: [],
-  parameters: [],
-});
+type TargetConfig = {
+  name: string;
+  dependsOn?: Target[];
+  executes?: BuildFn | BuildFn[];
+  inputs?: string[];
+  outputs?: string[];
+  parameters?: Parameter[];
+};
 
-export class TargetBuilder {
-  constructor(public target: Target) {}
-
-  name(name: string) {
-    return new TargetBuilder({
-      ...this.target,
-      name,
-    });
+export const createTarget = (target: TargetConfig): Target => {
+  let executes: Target['executes'] = [];
+  if (target.executes) {
+    if (Array.isArray(target.executes)) {
+      executes = target.executes;
+    }
+    else {
+      executes = [target.executes];
+    }
   }
-
-  dependsOn(target: Target) {
-    return new TargetBuilder({
-      ...this.target,
-      dependsOn: [
-        ...(this.target.dependsOn || []),
-        target,
-      ],
-    });
+  return {
+    name: target.name,
+    dependsOn: target.dependsOn ?? [],
+    executes,
+    inputs: target.inputs ?? [],
+    outputs: target.outputs ?? [],
+    parameters: target.parameters ?? [],
   }
-
-  parameter<T extends Parameter>(parameter: T) {
-    return new TargetBuilder({
-      ...this.target,
-      parameters: [
-        ...(this.target.parameters || []),
-        parameter,
-      ],
-    });
-  }
-
-  executes(fn: (context: ExecutionContext) => void) {
-    return new TargetBuilder({
-      ...this.target,
-      executes: [
-        ...(this.target.executes || []),
-        fn,
-      ],
-    });
-  }
-}
-
-export const createTarget = <T extends TargetBuilder>(
-  buildTarget: (_: TargetBuilder) => T,
-): Target => {
-  let target: Target;
-  return new Proxy<any>({}, {
-    get: (_, prop) => {
-      if (!target) {
-        target = buildTarget(createTargetBuilder()).target;
-      }
-      return (target as any)[prop];
-    },
-  });
 };
