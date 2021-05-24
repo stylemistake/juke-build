@@ -1,6 +1,6 @@
 ![JUKE build](./assets/juke-build.png)
 
-> UKE-less build system with a javascript-based DSL.
+> The AKE-less Build System for JavaScript and Node.js.
 > Inspired by [NUKE](https://nuke.build/).
 
 ## How to build
@@ -16,7 +16,7 @@ Copy contents of the `dist` folder anywhere you want to use Juke, then
 create a javascript file for the build script with the following contents:
 
 ```ts
-const { Juke } from './juke';
+const { Juke } = require('./juke');
 
 Juke.setup({
   parameters: [],
