@@ -42,8 +42,8 @@ Juke.setup({
 });
 ```
 
-Create parameters with `createParameter`, and don't forget to include them in
-the setup call. Available parameter types are: `string`, `number`, `boolean`.
+Create parameters with `createParameter`.
+Available parameter types are: `string`, `number`, `boolean`.
 Add a `[]` suffix to the type to make it an array.
 
 ```ts
