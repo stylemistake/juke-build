@@ -3,8 +3,8 @@ import { createTarget } from './target';
 import { runner } from './runner';
 import { logger } from './logger';
 
-const setup: typeof runner.register = (entities) => {
-  runner.register(entities);
+const setup: typeof runner.configure = (config) => {
+  runner.configure(config);
   runner.start();
 };
 

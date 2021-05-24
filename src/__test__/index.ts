@@ -47,7 +47,7 @@ const AllTarget = createTarget({
   ],
 });
 
-runner.register({
+runner.configure({
   parameters: [
     DefineParameter,
   ],

@@ -1,19 +1,17 @@
 import chalk from 'chalk';
 import EventEmitter from 'events';
 import { parseArgs, prepareArgs } from './argparse';
-import { logger } from './logger';
 import { ExecutionContext } from './context';
 import { compareFiles, File, Glob } from './fs';
+import { logger } from './logger';
 import { Parameter } from './parameter';
 import { Target } from './target';
 
-export type RunnerEntities = {
-  targets: Target[];
+export type RunnerConfig = {
+  targets?: Target[];
   default?: Target;
   parameters?: Parameter[];
 };
-
-type ParameterMap = Map<Parameter, unknown>;
 
 export const runner = new class Runner {
   defaultTarget?: Target;
@@ -21,14 +19,10 @@ export const runner = new class Runner {
   parameters: Parameter[] = [];
   workers: Worker[] = [];
 
-  register(entities: RunnerEntities) {
-    this.targets = entities.targets;
-    if (entities.parameters) {
-      this.parameters = entities.parameters;
-    }
-    if (entities.default) {
-      this.defaultTarget = entities.default;
-    }
+  configure(config: RunnerConfig) {
+    this.targets = config.targets ?? [];
+    this.parameters = config.parameters ?? [];
+    this.defaultTarget = config.default;
   }
 
   async start() {
