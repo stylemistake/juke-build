@@ -3,6 +3,13 @@
 > UKE-less build system with a javascript-based DSL.
 > Inspired by [NUKE](https://nuke.build/).
 
+## How to build
+
+```
+yarn install
+yarn build
+```
+
 ## General usage
 
 Copy contents of the `dist` folder anywhere you want to use Juke, then
@@ -77,14 +84,6 @@ const Target = Juke.createTarget({
   },
   ...
 });
-```
-
-## Development workflow
-
-```
-yarn install
-yarn test
-yarn build
 ```
 
 ## License
