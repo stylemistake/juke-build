@@ -12,11 +12,6 @@
     "target": "ES2019"
   },
   "include": [
-    "src/**/*",
-  ],
-  "exclude": [
-    "src/**/__test__",
-    "src/**/*.spec.*",
-    "src/**/*.test.*"
+    "src/index.ts",
   ]
 }

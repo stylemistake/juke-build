@@ -1,16 +1,23 @@
 import chalk from 'chalk';
 import EventEmitter from 'events';
 import { parseArgs, prepareArgs } from './argparse';
-import { ExecutionContext } from './context';
+import { ExitError } from './exec';
 import { compareFiles, File, Glob } from './fs';
 import { logger } from './logger';
-import { Parameter } from './parameter';
+import { Parameter, ParameterType } from './parameter';
 import { Target } from './target';
 
 export type RunnerConfig = {
   targets?: Target[];
   default?: Target;
   parameters?: Parameter[];
+};
+
+export type ExecutionContext = {
+  /** Get parameter value. */
+  get: <T extends ParameterType>(parameter: Parameter<T>) => (
+    T extends Array<unknown> ? T : T | null
+  );
 };
 
 export const runner = new class Runner {
@@ -106,6 +113,14 @@ export const runner = new class Runner {
           worker.resolveDependency(target);
         }
       });
+      spawnedWorker.onFail(() => {
+        for (const worker of this.workers) {
+          if (worker === spawnedWorker) {
+            continue;
+          }
+          worker.rejectDependency(target);
+        }
+      });
       spawnedWorker.start();
     }
     await Promise.all(this.workers.map((worker) => (
@@ -119,9 +134,10 @@ export const runner = new class Runner {
 };
 
 class Worker {
-  dependencies: Set<unknown>;
+  dependencies: Set<Target>;
   generator?: AsyncGenerator;
   emitter = new EventEmitter();
+  hasFailed = false;
 
   constructor(
     readonly target: Target,
@@ -136,13 +152,27 @@ class Worker {
     this.generator?.next();
   }
 
+  rejectDependency(target: Target) {
+    if (this.hasFailed || !this.dependencies.has(target)) {
+      return;
+    }
+    this.hasFailed = true;
+    const nameStr = chalk.cyan(this.target.name);
+    logger.error(`Target '${nameStr}' failed`);
+    this.emitter.emit('fail');
+  }
+
   start() {
     this.generator = this.process();
     this.generator.next();
   }
 
   onFinish(fn: () => void) {
-    this.emitter.on('finish', fn);
+    this.emitter.once('finish', fn);
+  }
+
+  onFail(fn: () => void) {
+    this.emitter.once('fail', fn);
   }
 
   private debugLog(...args: unknown[]) {
@@ -182,12 +212,32 @@ class Worker {
     } else {
       this.debugLog('Nothing to compare');
     }
+    // Check if we have errored until this point
+    if (this.hasFailed) {
+      return;
+    }
     // Execute the task
     if (this.target.executes.length > 0) {
       logger.action(`Starting '${nameStr}'`);
       const startedAt = Date.now();
       for (const fn of this.target.executes) {
-        await fn(this.context);
+        try {
+          await fn(this.context);
+        }
+        catch (err) {
+          const time = ((Date.now() - startedAt) / 1000) + 's';
+          const timeStr = chalk.magenta(time);
+          if (err instanceof ExitError) {
+            const codeStr = chalk.red(err.code);
+            logger.error(`Target '${nameStr}' failed in ${timeStr} (${codeStr})`);
+          }
+          else {
+            logger.error(`Target '${nameStr}' failed in ${timeStr}, unhandled exception:`);
+            console.error(err);
+          }
+          this.emitter.emit('fail');
+          return;
+        }
       }
       const time = ((Date.now() - startedAt) / 1000) + 's';
       const timeStr = chalk.magenta(time);

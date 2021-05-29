@@ -3,7 +3,40 @@
 > The AKE-less Build System for JavaScript and Node.js.
 > Inspired by [NUKE](https://nuke.build/).
 
-This project is a work in progress, check
+This project is a work in progress, take a look at our
+[roadmap](https://github.com/stylemistake/juke-build/projects/1).
+
+## Project goals
+
+### Simplicity
+
+Everything should be as simple as possible in all technical aspects. Builds
+are written in pure JavaScript and provide only the bare minimum for getting
+the job done.
+
+Currently it packs the following:
+
+- A robust dependency model between targets
+- File timestamp checker for inputs/outputs
+- Built-in CLI argument (and environment) parser with a strongly typed
+Parameter API.
+- Asynchronous execution of external programs via `Juke.exec()`
+
+You can bring your own tools into the mix, e.g. the glorious
+[google/zx](https://github.com/google/zx), or native JavaScript tooling, e.g.
+[webpack](https://webpack.js.org/), with no restrictions imposed by our build
+framework.
+
+### Minimal dependencies
+
+Build system should be native to JavaScript and Node.js, and require nothing
+but the Node.js executable, i.e. no dependency on npm or TypeScript compiler.
+
+### Strongly typed
+
+Strongly typed API with fully instrospectible build scripts that are written
+in plain JavaScript, which allows us to parse the build script and generate
+definition files for tighter integration with other tooling (e.g. CI).
 
 ## How to build
 
@@ -104,6 +137,17 @@ const Target = Juke.createTarget({
   inputs: ['package.json', 'src/**/*.js'],
   outputs: ['dest/bundle.js'],
   ...
+});
+```
+
+### Execute an external program
+
+```ts
+const Target = Juke.createTarget({
+  name: 'foo',
+  executes: async () => {
+    await exec('yarn', ['install'])
+  },
 });
 ```
 

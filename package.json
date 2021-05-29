@@ -2,6 +2,8 @@
   "name": "juke-build",
   "version": "0.1.0",
   "license": "MIT",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc && webpack",
     "test": "ts-node test/index.ts"

@@ -1,9 +1,10 @@
+import { exec } from './exec';
 import { logger } from './logger';
 import { createParameter as _createParameter, Parameter } from './parameter';
 import { runner, RunnerConfig } from './runner';
 import { createTarget as _createTarget, Target } from './target';
 
-export { logger };
+export { exec, logger };
 
 const autoParameters: Parameter[] = [];
 const autoTargets: Target[] = []
