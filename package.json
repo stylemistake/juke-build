@@ -1,6 +1,9 @@
 {
   "name": "juke-build",
   "version": "0.2.0",
+  "description": "The AKE-less Build System for JavaScript and Node.js.",
+  "keywords": ["build", "tool", "automation", "task", "runner", "make", "nuke"],
+  "homepage": "https://github.com/stylemistake/juke-build",
   "license": "MIT",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -8,6 +11,7 @@
     "./dist"
   ],
   "scripts": {
+    "prepack": "yarn run build",
     "build": "tsc && webpack",
     "test": "ts-node test/index.ts"
   },
