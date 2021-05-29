@@ -1,4 +1,4 @@
-![JUKE build](./assets/juke-build.png)
+![JUKE build](https://github.com/stylemistake/juke-build/blob/master/assets/juke-build.png)
 
 > The AKE-less Build System for JavaScript and Node.js.
 > Inspired by [NUKE](https://nuke.build/).
