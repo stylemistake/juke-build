@@ -1,8 +1,16 @@
 {
   "name": "juke-build",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "The AKE-less Build System for JavaScript and Node.js.",
-  "keywords": ["build", "tool", "automation", "task", "runner", "make", "nuke"],
+  "keywords": [
+    "build",
+    "tool",
+    "automation",
+    "task",
+    "runner",
+    "make",
+    "nuke"
+  ],
   "homepage": "https://github.com/stylemistake/juke-build",
   "license": "MIT",
   "main": "./dist/index.js",
