@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc && webpack",
-    "test": "ts-node src/__test__/index.ts"
+    "test": "ts-node test/index.ts"
   },
   "dependencies": {
     "@babel/core": "^7.14.3",

@@ -7,6 +7,14 @@ type TaskArgs = [
   ...string[],
 ];
 
+const stringToBoolean = (str?: string | null) => (
+  str !== undefined
+    && str !== null
+    && str !== 'false'
+    && str !== '0'
+    && str !== 'null'
+);
+
 /**
  * Returns global flags and tasks, which is an array of this format:
  * `[[taskName, ...taskArgs], ...]`
@@ -105,7 +113,7 @@ export const parseArgs = (args: string[], parameters: Parameter[]) => {
       continue;
     }
 
-    // Parsing of short flags
+    // Parsing of long flags
     // ----------------------------------------------------
 
     // Try to break the long flag into name/value
@@ -128,11 +136,8 @@ export const parseArgs = (args: string[], parameters: Parameter[]) => {
       continue;
     }
     if (parameter.isBoolean()) {
-      pushValue(parameter,
-        // True if no equals sign
-        equalsIndex < 0
-        // True if non null and non falsy value
-        || (value !== null && value !== '0' && value !== 'false'));
+      const noEqualsSign = equalsIndex < 0;
+      pushValue(parameter, noEqualsSign || stringToBoolean(value));
       continue;
     }
     // Rest of parameter types expect a value
@@ -146,5 +151,43 @@ export const parseArgs = (args: string[], parameters: Parameter[]) => {
     pushValue(parameter, value);
     continue;
   }
+
+  // Go over the env vars and fill in the gaps
+  // ------------------------------------------------------
+
+  for (const [key, value] of Object.entries(process.env)) {
+    const parameter = parameters.find((p) => (
+      p.name === key || p.toConstCase() === key
+    ));
+    if (!parameter || parameterMap.has(parameter)) {
+      continue;
+    }
+    let values: string[] = [];
+    if (value !== undefined) {
+      if (parameter.isArray()) {
+        values = value.split(',');
+      }
+      else {
+        values = [value];
+      }
+    }
+    for (const value of values) {
+      if (parameter.isBoolean()) {
+        pushValue(parameter, stringToBoolean(value));
+        continue;
+      }
+      // Rest of parameter types expect a value
+      if (value === '') {
+        continue;
+      }
+      if (parameter.isNumber()) {
+        pushValue(parameter, parseFloat(value));
+        continue;
+      }
+      pushValue(parameter, value);
+      continue;
+    }
+  }
+
   return parameterMap;
 };
