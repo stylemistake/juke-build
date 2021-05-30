@@ -121,10 +121,12 @@ export const runner = new class Runner {
           worker.rejectDependency(target);
         }
       });
-      spawnedWorker.start();
     }
     await Promise.all(this.workers.map((worker) => (
-      new Promise<void>((resolve) => worker.onFinish(resolve))
+      new Promise<void>((resolve) => {
+        worker.onFinish(resolve);
+        worker.start();
+      })
     )));
 
     const time = ((Date.now() - startedAt) / 1000) + 's';
@@ -189,6 +191,10 @@ class Worker {
       }
       yield;
     }
+    // Check if we have errored until this point
+    if (this.hasFailed) {
+      return;
+    }
     // Compare inputs and outputs
     this.debugLog('Comparing inputs and outputs');
     const inputs = this.target.inputs.flatMap((path) => (
@@ -204,7 +210,8 @@ class Worker {
     if (inputs.length > 0) {
       const needsRebuild = compareFiles(inputs, outputs);
       if (!needsRebuild) {
-        logger.action(`Skipping '${nameStr}' (up to date)`);
+        logger.info(`Skipping '${nameStr}' (up to date)`);
+        this.emitter.emit('finish');
         return;
       } else {
         this.debugLog('Needs rebuild, reason:', needsRebuild);
