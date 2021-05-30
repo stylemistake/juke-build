@@ -196,7 +196,7 @@ class Worker {
         ? new Glob(path).toFiles()
         : new File(path)
     ));
-    const outputs = this.target.inputs.flatMap((path) => (
+    const outputs = this.target.outputs.flatMap((path) => (
       path.includes('*')
         ? new Glob(path).toFiles()
         : new File(path)
