@@ -15,7 +15,7 @@ const DmTarget = Juke.createTarget({
       Juke.logger.info('Define:', define);
     }
     await Juke.sleep(1000);
-    await Juke.exec('false');
+    await Juke.exec('echo', ['hello!']);
   }
 });
 

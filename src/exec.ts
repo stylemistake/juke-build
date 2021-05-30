@@ -56,6 +56,7 @@ process.on('uncaughtException', exceptionHandler);
 
 export class ExitError extends Error {
   code: number | null = null;
+  signal: string | null = null;
 }
 
 export const exec = (
@@ -63,28 +64,29 @@ export const exec = (
   args: string[] = [],
   options: SpawnOptionsWithoutStdio = {},
 ) => {
-  return new Promise((resolve, reject) => {
+  return new Promise<void>((resolve, reject) => {
     // If executable exists relative to the current directory,
     // use that executable, otherwise spawn should fall back to
     // running it from PATH.
     if (stat(executable)) {
       executable = resolvePath(executable);
     }
-    const child = spawn(executable, args, {
-      stdio: ['pipe', 'pipe', 'ignore'],
-      ...options,
-    });
+    const child = spawn(executable, args, options);
     children.add(child);
+    child.stdout.pipe(process.stdout, { end: false });
+    child.stderr.pipe(process.stderr, { end: false });
+    child.stdin.end();
     child.on('error', (err) => reject(err));
-    child.on('exit', (code) => {
+    child.on('exit', (code, signal) => {
       children.delete(child);
       if (code !== 0) {
         const error = new ExitError('Process exited with code: ' + code);
         error.code = code;
+        error.signal = signal;
         reject(error);
       }
       else {
-        resolve(code);
+        resolve();
       }
     });
   });
