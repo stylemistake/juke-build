@@ -12,6 +12,12 @@ export { exec, chalk, glob, logger };
 const autoParameters: Parameter[] = [];
 const autoTargets: Target[] = []
 
+/**
+ * Configures Juke Build and starts executing targets.
+ *
+ * @param config Juke Build configuration.
+ * @returns Exit code of the whole runner process.
+ */
 export const setup = (config: RunnerConfig = {}) => {
   config = { ...config };
   if (!config.parameters) {
@@ -21,7 +27,7 @@ export const setup = (config: RunnerConfig = {}) => {
     config.targets = autoTargets;
   }
   runner.configure(config);
-  runner.start();
+  return runner.start();
 };
 
 export const createTarget: typeof _createTarget = (config) => {

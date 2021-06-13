@@ -136,8 +136,8 @@ export const runner = new class Runner {
       const timeStr = chalk.magenta(time);
       logger.action(`Done in ${timeStr}`);
     }
-    // Exit with either code 0 or 1 depdending on fail state.
-    process.exit(Number(hasFailedWorkers));
+    // Exit code 0 or 1 depdending on the fail state.
+    return Number(hasFailedWorkers);
   }
 };
 
