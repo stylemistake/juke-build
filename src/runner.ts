@@ -122,16 +122,19 @@ export const runner = new class Runner {
         }
       });
     }
-    await Promise.all(this.workers.map((worker) => (
-      new Promise<void>((resolve) => {
-        worker.onFinish(resolve);
+    const resolutions = await Promise.all(this.workers.map((worker) => (
+      new Promise<boolean>((resolve) => {
+        worker.onFinish(() => resolve(true));
+        worker.onFail(() => resolve(false));
         worker.start();
       })
     )));
-
-    const time = ((Date.now() - startedAt) / 1000) + 's';
-    const timeStr = chalk.magenta(time);
-    logger.action(`Done in ${timeStr}`);
+    // Show done only in happy path
+    if (!resolutions.includes(false)) {
+      const time = ((Date.now() - startedAt) / 1000) + 's';
+      const timeStr = chalk.magenta(time);
+      logger.action(`Done in ${timeStr}`);
+    }
   }
 };
 
@@ -155,13 +158,9 @@ class Worker {
   }
 
   rejectDependency(target: Target) {
-    if (this.hasFailed || !this.dependencies.has(target)) {
-      return;
-    }
+    this.dependencies.delete(target);
     this.hasFailed = true;
-    const nameStr = chalk.cyan(this.target.name);
-    logger.error(`Target '${nameStr}' failed`);
-    this.emitter.emit('fail');
+    this.generator?.next();
   }
 
   start() {
@@ -193,6 +192,9 @@ class Worker {
     }
     // Check if we have errored until this point
     if (this.hasFailed) {
+      const nameStr = chalk.cyan(this.target.name);
+      logger.error(`Target '${nameStr}' failed`);
+      this.emitter.emit('fail');
       return;
     }
     // Compare inputs and outputs
@@ -221,6 +223,9 @@ class Worker {
     }
     // Check if we have errored until this point
     if (this.hasFailed) {
+      const nameStr = chalk.cyan(this.target.name);
+      logger.error(`Target '${nameStr}' failed (at file comparison stage)`);
+      this.emitter.emit('fail');
       return;
     }
     // Execute the task
@@ -236,7 +241,7 @@ class Worker {
           const timeStr = chalk.magenta(time);
           if (err instanceof ExitError) {
             const codeStr = chalk.red(err.code);
-            logger.error(`Target '${nameStr}' failed in ${timeStr} (${codeStr})`);
+            logger.error(`Target '${nameStr}' failed in ${timeStr}, exit code: ${codeStr}`);
           }
           else {
             logger.error(`Target '${nameStr}' failed in ${timeStr}, unhandled exception:`);

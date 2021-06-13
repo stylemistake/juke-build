@@ -34,12 +34,23 @@ const AfterTarget = Juke.createTarget({
   },
 });
 
+const LogTarget = Juke.createTarget({
+  name: 'log',
+  executes: async () => {
+    Juke.logger.error('Testing log error');
+    Juke.logger.warn('Testing log warn');
+    Juke.logger.info('Testing log info');
+    Juke.logger.debug('Testing log debug');
+  },
+})
+
 const AllTarget = Juke.createTarget({
   name: 'all',
   dependsOn: [
     DmTarget,
     TguiTarget,
     AfterTarget,
+    LogTarget,
   ],
 });
 

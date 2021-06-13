@@ -24,7 +24,7 @@ export const logger = {
   },
   info: (...args: unknown[]) => {
     console.log(chalk.bold(
-      chalk.yellowBright('::'),
+      chalk.blueBright('::'),
       chalk.whiteBright(...args)
     ));
   },
