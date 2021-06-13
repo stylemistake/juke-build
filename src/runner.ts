@@ -129,12 +129,15 @@ export const runner = new class Runner {
         worker.start();
       })
     )));
+    const hasFailedWorkers = resolutions.includes(false);
     // Show done only in happy path
-    if (!resolutions.includes(false)) {
+    if (!hasFailedWorkers) {
       const time = ((Date.now() - startedAt) / 1000) + 's';
       const timeStr = chalk.magenta(time);
       logger.action(`Done in ${timeStr}`);
     }
+    // Exit with either code 0 or 1 depdending on fail state.
+    process.exit(Number(hasFailedWorkers));
   }
 };
 
