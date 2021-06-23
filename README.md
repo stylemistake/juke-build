@@ -146,7 +146,7 @@ const Target = Juke.createTarget({
 const Target = Juke.createTarget({
   name: 'foo',
   executes: async () => {
-    await exec('yarn', ['install'])
+    await Juke.exec('yarn', ['install'])
   },
 });
 ```
