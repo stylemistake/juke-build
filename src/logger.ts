@@ -29,7 +29,7 @@ export const logger = {
     ));
   },
   debug: (...args: unknown[]) => {
-    if (process.env.DEBUG) {
+    if (process.env.JUKE_DEBUG) {
       console.log(chalk.gray(...args));
     }
   },

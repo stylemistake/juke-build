@@ -4,20 +4,13 @@ import { parseArgs, prepareArgs } from './argparse';
 import { ExitError } from './exec';
 import { compareFiles, File, Glob } from './fs';
 import { logger } from './logger';
-import { Parameter, ParameterType } from './parameter';
-import { Target } from './target';
+import { Parameter } from './parameter';
+import { ExecutionContext, Target } from './target';
 
 export type RunnerConfig = {
   targets?: Target[];
   default?: Target;
   parameters?: Parameter[];
-};
-
-export type ExecutionContext = {
-  /** Get parameter value. */
-  get: <T extends ParameterType>(parameter: Parameter<T>) => (
-    T extends Array<unknown> ? T : T | null
-  );
 };
 
 export const runner = new class Runner {
@@ -199,6 +192,17 @@ class Worker {
       logger.error(`Target '${nameStr}' failed`);
       this.emitter.emit('fail');
       return;
+    }
+    // Check onlyWhen conditions
+    for (const onlyWhen of this.target.onlyWhen) {
+      if (!onlyWhen(this.context)) {
+        logger.info(`Skipping '${nameStr}' (condition not met)`);
+        this.emitter.emit('finish');
+        return;
+      }
+    }
+    if (this.target.onlyWhen.length > 0) {
+      this.debugLog('Needs rebuild based on onlyWhen conditions');
     }
     // Compare inputs and outputs
     this.debugLog('Comparing inputs and outputs');

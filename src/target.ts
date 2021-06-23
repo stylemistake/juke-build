@@ -1,14 +1,23 @@
-import { Parameter } from './parameter';
+import { Parameter, ParameterType } from './parameter';
 
-type BuildFn = (...args: any) => unknown;
+export type ExecutionContext = {
+  /** Get parameter value. */
+  get: <T extends ParameterType>(parameter: Parameter<T>) => (
+    T extends Array<unknown> ? T : T | null
+  );
+};
+
+type ExecutesFn = (context: ExecutionContext) => unknown;
+type OnlyWhenFn = (context: ExecutionContext) => boolean;
 
 export type Target = {
   name: string;
   dependsOn: Target[];
-  executes: BuildFn[];
+  executes: ExecutesFn[];
   inputs: string[];
   outputs: string[];
   parameters: Parameter[];
+  onlyWhen: OnlyWhenFn[];
 };
 
 type TargetConfig = {
@@ -32,7 +41,7 @@ type TargetConfig = {
    *   console.log(get(Parameter));
    * },
    */
-  executes?: BuildFn | BuildFn[];
+  executes?: ExecutesFn | ExecutesFn[];
   /**
    * Files that are consumed by this target.
    */
@@ -48,6 +57,11 @@ type TargetConfig = {
    * in the executor function.
    */
   parameters?: Parameter[];
+  /**
+   * Target will run only when this function returns true. It accepts a
+   * single argument - execution context.
+   */
+  onlyWhen?: OnlyWhenFn | OnlyWhenFn[];
 };
 
 export const createTarget = (target: TargetConfig): Target => {
@@ -60,6 +74,15 @@ export const createTarget = (target: TargetConfig): Target => {
       executes = [target.executes];
     }
   }
+  let onlyWhen: Target['onlyWhen'] = [];
+  if (target.onlyWhen) {
+    if (Array.isArray(target.onlyWhen)) {
+      onlyWhen = target.onlyWhen;
+    }
+    else {
+      onlyWhen = [target.onlyWhen];
+    }
+  }
   return {
     name: target.name,
     dependsOn: target.dependsOn ?? [],
@@ -67,5 +90,6 @@ export const createTarget = (target: TargetConfig): Target => {
     inputs: target.inputs ?? [],
     outputs: target.outputs ?? [],
     parameters: target.parameters ?? [],
+    onlyWhen,
   }
 };

@@ -24,7 +24,8 @@ type ParameterTypeByString<T extends ParameterStringType> = (
   T extends 'number' ? number :
   T extends 'number[]' ? number[] :
   T extends 'boolean' ? boolean :
-  T extends 'boolean[]' ? boolean[] : never
+  T extends 'boolean[]' ? boolean[] :
+  never
 );
 
 export type ParameterMap = Map<Parameter, unknown[]>;

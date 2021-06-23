@@ -42,7 +42,19 @@ const LogTarget = Juke.createTarget({
     Juke.logger.info('Testing log info');
     Juke.logger.debug('Testing log debug');
   },
-})
+});
+
+const AlwaysTarget = Juke.createTarget({
+  name: 'always',
+  onlyWhen: () => true,
+  executes: () => undefined,
+});
+
+const NeverTarget = Juke.createTarget({
+  name: 'never',
+  onlyWhen: () => false,
+  executes: () => undefined,
+});
 
 const AllTarget = Juke.createTarget({
   name: 'all',
@@ -51,6 +63,8 @@ const AllTarget = Juke.createTarget({
     TguiTarget,
     AfterTarget,
     LogTarget,
+    AlwaysTarget,
+    NeverTarget,
   ],
 });
 

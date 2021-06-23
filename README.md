@@ -73,7 +73,6 @@ const Target = Juke.createTarget({
   executes: async () => {
     console.log('Hello, world!');
   },
-  ...
 });
 ```
 
@@ -82,7 +81,7 @@ const Target = Juke.createTarget({
 ```ts
 const Target = Juke.createTarget({
   dependsOn: [OtherTarget],
-  ...
+  // ...
 });
 ```
 
@@ -103,12 +102,19 @@ Juke.setup({
 Available parameter types are: `string`, `number`, `boolean`.
 Add a `[]` suffix to the type to make it an array.
 
-To fetch parameter's value, you must use a `get` helper in execution context.
+To provide a parameter via CLI, you can either specify it by name
+(i.e. `--name`), or its alias (i.e. `-N`). If parameter is not `boolean`,
+a value is expected, which you can provide via `--name=value` or `-Nvalue`.
+
+To fetch the parameter's value, you must use a `get` helper, which is a
+property of an execution context - object that is passed to almost every
+target's function in Juke.
 
 ```ts
 const Parameter = Juke.createParameter({
-  name: 'foo',
+  name: 'name',
   type: 'string[]',
+  alias: 'N',
 });
 
 const Target = Juke.createTarget({
@@ -118,7 +124,7 @@ const Target = Juke.createTarget({
     const values = get(Parameter);
     console.log('Parameter values:', values);
   },
-  ...
+  // ...
 });
 ```
 
@@ -136,7 +142,26 @@ Supports globs.
 const Target = Juke.createTarget({
   inputs: ['package.json', 'src/**/*.js'],
   outputs: ['dest/bundle.js'],
-  ...
+  // ...
+});
+```
+
+### Conditionally run targets
+
+If you need more control over when the target builds, you can provide a custom
+condition using `onlyWhen`. Target will build only when the condition is
+`true`.
+
+Function can be `async` if it has to be, target will wait for all promises to
+resolve.
+
+If you have a bunch of reusable conditions, you can pass an array of
+conditions.
+
+```ts
+const Target = Juke.createTarget({
+  onlyWhen: ({ get }) => get(BuildModeParameter) === BUILD_ALL,
+  // ...
 });
 ```
 
@@ -181,7 +206,7 @@ FOO=A,B ./build.js task-1
 
 [/tg/station13 build pipeline](https://github.com/tgstation/tgstation/blob/d200efc29312a2683a9d074e999db70287f69eae/tools/build/build.js)
 
-<details> 
+<details>
   <summary>Screenshot</summary>
   <img alt="image" src="https://user-images.githubusercontent.com/1516236/123164088-26166580-d47b-11eb-9b03-b048274a4499.png">
 </details>

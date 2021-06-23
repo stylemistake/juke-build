@@ -10,7 +10,7 @@ import { createTarget as _createTarget, Target } from './target';
 export { exec, chalk, glob, logger };
 
 const autoParameters: Parameter[] = [];
-const autoTargets: Target[] = []
+const autoTargets: Target[] = [];
 
 /**
  * Configures Juke Build and starts executing targets.
