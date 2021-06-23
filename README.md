@@ -177,6 +177,15 @@ you can use a comma to separate the values.
 FOO=A,B ./build.js task-1
 ```
 
+## Examples
+
+[/tg/station13 build pipeline](https://github.com/tgstation/tgstation/blob/d200efc29312a2683a9d074e999db70287f69eae/tools/build/build.js)
+
+<details> 
+  <summary>Screenshot</summary>
+  <img alt="image" src="https://user-images.githubusercontent.com/1516236/123164088-26166580-d47b-11eb-9b03-b048274a4499.png">
+</details>
+
 ## License
 
 Source code is available under the **MIT** license.
