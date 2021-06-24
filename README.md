@@ -61,8 +61,8 @@ Juke.setup();
 
 ### Create targets
 
-Targets are simple containers for your build scripts, that define how it should
-run in relation to other targets. It may have dependencies on other targets,
+Target is a simple container for your build script, that defines how it should be
+executed in relation to other targets. It may have dependencies on other targets,
 required parameters and various other conditions for executing the target.
 
 All targets must have a `name`, which is used in CLI for specifying the target.
