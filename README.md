@@ -102,7 +102,7 @@ Juke.setup({
 If your target consumes and creates files, you can declare them on the target,
 so it would check whether it actually needs to rebuild.
 
-If any input file is newer than output files, target will rebuild, otherwise
+If any input file is newer than output files, target will be rebuilt, otherwise
 it will be skipped.
 
 Supports globs.
@@ -215,7 +215,7 @@ FOO=A,B ./build.js task-1
 
 ## Examples
 
-[/tg/station13 build pipeline](https://github.com/tgstation/tgstation/blob/d200efc29312a2683a9d074e999db70287f69eae/tools/build/build.js)
+[/tg/station13 build pipeline](https://github.com/tgstation/tgstation/blob/master/tools/build/build.js)
 
 <details>
   <summary>Screenshot</summary>
