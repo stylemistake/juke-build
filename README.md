@@ -102,7 +102,7 @@ Juke.setup({
 If your target consumes and creates files, you can declare them on the target,
 so it would check whether it actually needs to rebuild.
 
-If any input file is newer than output files, target will be rebuilt, otherwise
+If any input file is newer than an output file, target will be rebuilt, otherwise
 it will be skipped.
 
 Supports globs.
