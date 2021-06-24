@@ -28,7 +28,13 @@ const TguiTarget = Juke.createTarget({
 
 const AfterTarget = Juke.createTarget({
   name: 'after',
-  dependsOn: [DmTarget, TguiTarget],
+  dependsOn: async () => [
+    DmTarget,
+    TguiTarget,
+    true,
+    false,
+    null,
+  ],
   executes: async () => {
     await Juke.sleep(500);
   },
@@ -56,6 +62,26 @@ const NeverTarget = Juke.createTarget({
   executes: () => undefined,
 });
 
+const SimpleFileTarget = Juke.createTarget({
+  name: 'simple-file',
+  inputs: [
+    'non-existing-file',
+    true,
+    false,
+  ],
+  executes: () => undefined,
+});
+
+const ConditionalFileTarget = Juke.createTarget({
+  name: 'conditional-file',
+  inputs: async () => [
+    'non-existing-file',
+    true,
+    false,
+  ],
+  executes: () => undefined,
+});
+
 const AllTarget = Juke.createTarget({
   name: 'all',
   dependsOn: [
@@ -65,6 +91,8 @@ const AllTarget = Juke.createTarget({
     LogTarget,
     AlwaysTarget,
     NeverTarget,
+    SimpleFileTarget,
+    ConditionalFileTarget,
   ],
 });
 

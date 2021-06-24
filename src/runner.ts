@@ -5,7 +5,7 @@ import { ExitError } from './exec';
 import { compareFiles, File, Glob } from './fs';
 import { logger } from './logger';
 import { Parameter } from './parameter';
-import { ExecutionContext, Target } from './target';
+import { ExecutionContext, FileIo, Target } from './target';
 
 export type RunnerConfig = {
   targets?: Target[];
@@ -32,11 +32,15 @@ export const runner = new class Runner {
     // Parse arguments
     // ----------------------------------------------------
 
-    type TargetWithArgs = { target: Target; args: string[] };
+    type TargetMeta = {
+      args: string[];
+      context?: ExecutionContext;
+      dependsOn?: Target[];
+    };
 
     const { globalFlags, taskArgs } = prepareArgs(process.argv.slice(2));
     const globalParameterMap = parseArgs(globalFlags, this.parameters);
-    const targetsToRun: Map<Target, TargetWithArgs> = new Map();
+    const targetsToRun: Map<Target, TargetMeta> = new Map();
     for (const [taskName, ...args] of taskArgs) {
       const target = this.targets.find((t) => t.name === taskName);
       if (!target) {
@@ -45,7 +49,7 @@ export const runner = new class Runner {
         logger.log('Available tasks:', ...this.targets.map((t) => t.name));
         process.exit(1);
       }
-      targetsToRun.set(target, { target, args });
+      targetsToRun.set(target, { args });
     }
 
     if (targetsToRun.size === 0) {
@@ -55,26 +59,57 @@ export const runner = new class Runner {
         process.exit(1);
       }
       targetsToRun.set(this.defaultTarget, {
-        target: this.defaultTarget,
         args: [],
       });
     }
 
-    // Walk over the dependency graph
+    // Walk over the dependency graph and create execution contexts
     // ----------------------------------------------------
 
-    let toVisit: TargetWithArgs[] = Array.from(targetsToRun.values());
+    let toVisit: [Target, TargetMeta][] = Array.from(targetsToRun.entries());
     while (true) {
       const node = toVisit.shift();
       if (!node) {
         break;
       }
-      const { target, args } = node;
-      for (const dependency of target.dependsOn) {
+      const [target, meta] = node;
+      // Parse arguments and initialize the context
+      if (!meta.context) {
+        const localParameterMap = parseArgs(meta.args, target.parameters);
+        meta.context = {
+          get: (parameter): any => {
+            const value = localParameterMap.get(parameter)
+              ?? globalParameterMap.get(parameter);
+            if (parameter.isArray()) {
+              return value ?? [];
+            }
+            else {
+              return value?.[0] ?? null;
+            }
+          },
+        };
+      }
+      // Resolve dependencies
+      if (!meta.dependsOn) {
+        const optionalDependsOn = (
+          (typeof target.dependsOn === 'function'
+            ? await target.dependsOn(meta.context)
+            : target.dependsOn)
+          || []
+        );
+        meta.dependsOn = optionalDependsOn.filter((dep) => (
+          typeof dep === 'object' && dep !== null
+        )) as Target[];
+      }
+      // Add each dependency as a tree node to visit
+      for (const dependency of meta.dependsOn) {
         if (!targetsToRun.has(dependency)) {
-          const node = { target: dependency, args };
-          targetsToRun.set(dependency, node);
-          toVisit.push(node);
+          const depMeta = { args: meta.args };
+          targetsToRun.set(dependency, depMeta);
+          toVisit.push([dependency, depMeta]);
+        }
+        else {
+          logger.debug('Dropped a possible circular dependency', dependency);
         }
       }
     }
@@ -82,21 +117,10 @@ export const runner = new class Runner {
     // Spawn workers
     // ----------------------------------------------------
 
-    for (const { target, args } of targetsToRun.values()) {
-      const localParameterMap = parseArgs(args, target.parameters);
-      const context: ExecutionContext = {
-        get: (parameter): any => {
-          const value = localParameterMap.get(parameter)
-            ?? globalParameterMap.get(parameter);
-          if (parameter.isArray()) {
-            return value ?? [];
-          }
-          else {
-            return value?.[0] ?? null;
-          }
-        },
-      };
-      const spawnedWorker = new Worker(target, context);
+    for (const [target, meta] of targetsToRun.entries()) {
+      const context = meta.context!;
+      const dependsOn = meta.dependsOn!;
+      const spawnedWorker = new Worker(target, context, dependsOn);
       this.workers.push(spawnedWorker);
       spawnedWorker.onFinish(() => {
         for (const worker of this.workers) {
@@ -143,8 +167,9 @@ class Worker {
   constructor(
     readonly target: Target,
     readonly context: ExecutionContext,
+    readonly dependsOn: Target[],
   ) {
-    this.dependencies = new Set(target.dependsOn);
+    this.dependencies = new Set(dependsOn);
     this.debugLog('ready');
   }
 
@@ -193,29 +218,36 @@ class Worker {
       this.emitter.emit('fail');
       return;
     }
-    // Check onlyWhen conditions
-    for (const onlyWhen of this.target.onlyWhen) {
-      if (!onlyWhen(this.context)) {
-        logger.info(`Skipping '${nameStr}' (condition not met)`);
+    // Check onlyWhen condition
+    if (this.target.onlyWhen) {
+      const result = await this.target.onlyWhen(this.context);
+      if (!result) {
+        logger.info(`Skipping '${nameStr}' (condition unmet)`);
         this.emitter.emit('finish');
         return;
       }
-    }
-    if (this.target.onlyWhen.length > 0) {
-      this.debugLog('Needs rebuild based on onlyWhen conditions');
+      this.debugLog('Needs rebuild based on onlyWhen condition');
     }
     // Compare inputs and outputs
     this.debugLog('Comparing inputs and outputs');
-    const inputs = this.target.inputs.flatMap((path) => (
-      path.includes('*')
-        ? new Glob(path).toFiles()
-        : new File(path)
-    ));
-    const outputs = this.target.outputs.flatMap((path) => (
-      path.includes('*')
-        ? new Glob(path).toFiles()
-        : new File(path)
-    ));
+    const fileMapper = async (fileIo: FileIo) => {
+      const optionalPaths = (
+        (typeof fileIo === 'function'
+          ? await fileIo(this.context)
+          : fileIo)
+        || []
+      );
+      const paths = optionalPaths.filter((path) => (
+        typeof path === 'string'
+      )) as string[];
+      return paths.flatMap((path) => (
+        path.includes('*')
+          ? new Glob(path).toFiles()
+          : new File(path)
+      ));
+    };
+    const inputs = await fileMapper(this.target.inputs);
+    const outputs = await fileMapper(this.target.outputs);
     if (inputs.length > 0) {
       const needsRebuild = compareFiles(inputs, outputs);
       if (!needsRebuild) {
@@ -236,27 +268,25 @@ class Worker {
       return;
     }
     // Execute the task
-    if (this.target.executes.length > 0) {
+    if (this.target.executes) {
       logger.action(`Starting '${nameStr}'`);
       const startedAt = Date.now();
-      for (const fn of this.target.executes) {
-        try {
-          await fn(this.context);
+      try {
+        await this.target.executes(this.context);
+      }
+      catch (err) {
+        const time = ((Date.now() - startedAt) / 1000) + 's';
+        const timeStr = chalk.magenta(time);
+        if (err instanceof ExitError) {
+          const codeStr = chalk.red(err.code);
+          logger.error(`Target '${nameStr}' failed in ${timeStr}, exit code: ${codeStr}`);
         }
-        catch (err) {
-          const time = ((Date.now() - startedAt) / 1000) + 's';
-          const timeStr = chalk.magenta(time);
-          if (err instanceof ExitError) {
-            const codeStr = chalk.red(err.code);
-            logger.error(`Target '${nameStr}' failed in ${timeStr}, exit code: ${codeStr}`);
-          }
-          else {
-            logger.error(`Target '${nameStr}' failed in ${timeStr}, unhandled exception:`);
-            console.error(err);
-          }
-          this.emitter.emit('fail');
-          return;
+        else {
+          logger.error(`Target '${nameStr}' failed in ${timeStr}, unhandled exception:`);
+          console.error(err);
         }
+        this.emitter.emit('fail');
+        return;
       }
       const time = ((Date.now() - startedAt) / 1000) + 's';
       const timeStr = chalk.magenta(time);

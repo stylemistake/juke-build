@@ -7,17 +7,23 @@ export type ExecutionContext = {
   );
 };
 
-type ExecutesFn = (context: ExecutionContext) => unknown;
-type OnlyWhenFn = (context: ExecutionContext) => boolean;
+type BooleanLike = boolean | null | undefined;
+type WithExecutionContext<R> = (context: ExecutionContext) => R | Promise<R>;
+type WithOptionalExecutionContext<R> = R | WithExecutionContext<R>;
+
+type DependsOn = WithOptionalExecutionContext<(Target | BooleanLike)[]>
+type ExecutesFn = WithExecutionContext<unknown>;
+type OnlyWhenFn = WithExecutionContext<BooleanLike>;
+export type FileIo = WithOptionalExecutionContext<(string | BooleanLike)[]>;
 
 export type Target = {
   name: string;
-  dependsOn: Target[];
-  executes: ExecutesFn[];
-  inputs: string[];
-  outputs: string[];
+  dependsOn: DependsOn;
+  executes?: ExecutesFn;
+  inputs: FileIo;
+  outputs: FileIo;
   parameters: Parameter[];
-  onlyWhen: OnlyWhenFn[];
+  onlyWhen?: OnlyWhenFn;
 };
 
 type TargetConfig = {
@@ -29,7 +35,7 @@ type TargetConfig = {
    * Dependencies for this target. They will be ran before executing this
    * target, and may run in parallel.
    */
-  dependsOn?: Target[];
+  dependsOn?: DependsOn;
   /**
    * Function that is delegated to the execution engine for building this
    * target. It is normally an async function, which accepts a single
@@ -41,17 +47,17 @@ type TargetConfig = {
    *   console.log(get(Parameter));
    * },
    */
-  executes?: ExecutesFn | ExecutesFn[];
+  executes?: ExecutesFn;
   /**
    * Files that are consumed by this target.
    */
-  inputs?: string[];
+  inputs?: FileIo;
   /**
    * Files that are produced by this target. Additionally, they are also
    * touched every time target finishes executing in order to stop
    * this target from re-running.
    */
-  outputs?: string[];
+  outputs?: FileIo;
   /**
    * Parameters that are local to this task. Can be retrieved via `get`
    * in the executor function.
@@ -61,35 +67,17 @@ type TargetConfig = {
    * Target will run only when this function returns true. It accepts a
    * single argument - execution context.
    */
-  onlyWhen?: OnlyWhenFn | OnlyWhenFn[];
+  onlyWhen?: OnlyWhenFn;
 };
 
 export const createTarget = (target: TargetConfig): Target => {
-  let executes: Target['executes'] = [];
-  if (target.executes) {
-    if (Array.isArray(target.executes)) {
-      executes = target.executes;
-    }
-    else {
-      executes = [target.executes];
-    }
-  }
-  let onlyWhen: Target['onlyWhen'] = [];
-  if (target.onlyWhen) {
-    if (Array.isArray(target.onlyWhen)) {
-      onlyWhen = target.onlyWhen;
-    }
-    else {
-      onlyWhen = [target.onlyWhen];
-    }
-  }
   return {
     name: target.name,
     dependsOn: target.dependsOn ?? [],
-    executes,
+    executes: target.executes,
     inputs: target.inputs ?? [],
     outputs: target.outputs ?? [],
     parameters: target.parameters ?? [],
-    onlyWhen,
+    onlyWhen: target.onlyWhen,
   }
 };

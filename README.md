@@ -97,37 +97,6 @@ Juke.setup({
 });
 ```
 
-### Create parameters
-
-Available parameter types are: `string`, `number`, `boolean`.
-Add a `[]` suffix to the type to make it an array.
-
-To provide a parameter via CLI, you can either specify it by name
-(i.e. `--name`), or its alias (i.e. `-N`). If parameter is not `boolean`,
-a value is expected, which you can provide via `--name=value` or `-Nvalue`.
-
-To fetch the parameter's value, you must use a `get` helper, which is a
-property of an execution context - object that is passed to almost every
-target's function in Juke.
-
-```ts
-const Parameter = Juke.createParameter({
-  name: 'name',
-  type: 'string[]',
-  alias: 'N',
-});
-
-const Target = Juke.createTarget({
-  name: 'foo',
-  parameters: [Parameter],
-  executes: async ({ get }) => {
-    const values = get(Parameter);
-    console.log('Parameter values:', values);
-  },
-  // ...
-});
-```
-
 ### Declare file inputs and outputs
 
 If your target consumes and creates files, you can declare them on the target,
@@ -142,6 +111,46 @@ Supports globs.
 const Target = Juke.createTarget({
   inputs: ['package.json', 'src/**/*.js'],
   outputs: ['dest/bundle.js'],
+  // ...
+});
+```
+
+### Create parameters
+
+Available parameter types are: `string`, `number`, `boolean`.
+Add a `[]` suffix to the type to make it an array.
+
+To provide a parameter via CLI, you can either specify it by name
+(i.e. `--name`), or its alias (i.e. `-N`). If parameter is not `boolean`,
+a value is expected, which you can provide via `--name=value` or `-Nvalue`.
+
+To fetch the parameter's value, you must use a `get` helper, which is a
+property of the execution context - object that is passed to almost every
+target field in Juke:
+
+- `dependsOn`
+- `inputs`
+- `outputs`
+- `onlyWhen`
+- `executes`
+
+```ts
+const Parameter = Juke.createParameter({
+  name: 'name',
+  type: 'string[]',
+  alias: 'N',
+});
+
+const Target = Juke.createTarget({
+  name: 'foo',
+  parameters: [Parameter],
+  dependsOn: ({ get }) => [
+    get(Parameter).includes('foo') && FooTarget,
+  ],
+  executes: async ({ get }) => {
+    const values = get(Parameter);
+    console.log('Parameter values:', values);
+  },
   // ...
 });
 ```
@@ -167,6 +176,11 @@ const Target = Juke.createTarget({
 
 ### Execute an external program
 
+Juke provides a handy `Juke.exec` helper. It currently does not return
+anything (besides `Promise<void>`), and it throws if program has exited
+with a non-zero exit code (or was killed by a non-EXIT signal). If uncatched,
+error propagates through Juke and puts dependent targets into a failed state.
+
 ```ts
 const Target = Juke.createTarget({
   name: 'foo',
@@ -181,7 +195,7 @@ const Target = Juke.createTarget({
 You can build targets by specifying their names via CLI.
 
 Every flag that you specify via CLI is transformed into parameters, and their
-name must be written in `--kebab-case`.
+names are canonically written in `--kebab-case`.
 
 ```
 ./build.js [globalFlags] task-1 [flagsLocalToTask1] task-2 [flagsLocalToTask2]
