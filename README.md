@@ -117,7 +117,7 @@ const Target = Juke.createTarget({
 
 ### Create parameters
 
-Available parameter types are: `string`, `number`, `boolean`.
+Available parameter types are: `string`, `number` and `boolean`.
 Add a `[]` suffix to the type to make it an array.
 
 To provide a parameter via CLI, you can either specify it by name
@@ -163,9 +163,6 @@ condition using `onlyWhen`. Target will build only when the condition is
 
 Function can be `async` if it has to be, target will wait for all promises to
 resolve.
-
-If you have a bunch of reusable conditions, you can pass an array of
-conditions.
 
 ```ts
 const Target = Juke.createTarget({
