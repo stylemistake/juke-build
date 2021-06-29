@@ -26,7 +26,7 @@ export type Target = {
   onlyWhen?: OnlyWhenFn;
 };
 
-type TargetConfig = {
+export type TargetConfig = {
   /**
    * Target name. This parameter is required.
    */
@@ -70,14 +70,14 @@ type TargetConfig = {
   onlyWhen?: OnlyWhenFn;
 };
 
-export const createTarget = (target: TargetConfig): Target => {
-  return {
-    name: target.name,
-    dependsOn: target.dependsOn ?? [],
-    executes: target.executes,
-    inputs: target.inputs ?? [],
-    outputs: target.outputs ?? [],
-    parameters: target.parameters ?? [],
-    onlyWhen: target.onlyWhen,
-  }
-};
+export type TargetCreator = (target: TargetConfig) => Target;
+
+export const createTarget: TargetCreator = (target) => ({
+  name: target.name,
+  dependsOn: target.dependsOn ?? [],
+  executes: target.executes,
+  inputs: target.inputs ?? [],
+  outputs: target.outputs ?? [],
+  parameters: target.parameters ?? [],
+  onlyWhen: target.onlyWhen,
+});

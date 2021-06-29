@@ -1,13 +1,17 @@
-import chalk from 'chalk';
+import _chalk from 'chalk';
 import fs from 'fs';
-import glob from 'glob';
+import { glob as _glob } from 'glob';
 import { exec } from './exec';
 import { logger } from './logger';
-import { createParameter as _createParameter, Parameter } from './parameter';
+import { createParameter as _createParameter, Parameter, ParameterCreator } from './parameter';
 import { runner, RunnerConfig } from './runner';
-import { createTarget as _createTarget, Target } from './target';
+import { createTarget as _createTarget, Target, TargetCreator } from './target';
 
-export { exec, chalk, glob, logger };
+export { exec };
+export { logger };
+
+export const chalk = _chalk;
+export const glob = _glob;
 
 const autoParameters: Parameter[] = [];
 const autoTargets: Target[] = [];
@@ -30,13 +34,13 @@ export const setup = (config: RunnerConfig = {}) => {
   return runner.start();
 };
 
-export const createTarget: typeof _createTarget = (config) => {
+export const createTarget: TargetCreator = (config) => {
   const target = _createTarget(config);
   autoTargets.push(target);
   return target;
 };
 
-export const createParameter: typeof _createParameter = (config) => {
+export const createParameter: ParameterCreator = (config) => {
   const parameter = _createParameter(config);
   autoParameters.push(parameter);
   return parameter;

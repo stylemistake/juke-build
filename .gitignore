@@ -10,6 +10,7 @@ package-lock.json
 !/.yarn/plugins
 !/.yarn/sdks
 !/.yarn/versions
+!/.yarn/juke
 
 ## Build artifacts
 /dist

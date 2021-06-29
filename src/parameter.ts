@@ -30,7 +30,7 @@ type ParameterTypeByString<T extends ParameterStringType> = (
 
 export type ParameterMap = Map<Parameter, unknown[]>;
 
-type ParameterOptions<T extends ParameterStringType> = {
+export type ParameterConfig<T extends ParameterStringType> = {
   /**
    * Parameter name, in "camelCase".
    */
@@ -53,13 +53,15 @@ type ParameterOptions<T extends ParameterStringType> = {
   readonly alias?: string;
 };
 
-export const createParameter = <T extends ParameterStringType>(
-  options: ParameterOptions<T>
-) => (
-  new Parameter<ParameterTypeByString<T>>(
-    options.name,
-    options.type,
-    options.alias)
+export type ParameterCreator = <T extends ParameterStringType>(
+  config: ParameterConfig<T>
+) => Parameter<ParameterTypeByString<T>>;
+
+export const createParameter: ParameterCreator = (config) => (
+  new Parameter(
+    config.name,
+    config.type,
+    config.alias)
 );
 
 export class Parameter<T extends ParameterType = any> {

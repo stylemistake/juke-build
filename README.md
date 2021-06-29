@@ -41,8 +41,7 @@ definition files for tighter integration with other tooling (e.g. CI).
 ## How to build
 
 ```
-yarn install
-yarn build
+./build.cjs
 ```
 
 ## General usage
@@ -214,6 +213,8 @@ FOO=A,B ./build.js task-1
 ```
 
 ## Examples
+
+[Our own build pipeline](https://github.com/stylemistake/juke-build/blob/master/build.cjs)
 
 [/tg/station13 build pipeline](https://github.com/tgstation/tgstation/blob/master/tools/build/build.js)
 

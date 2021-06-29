@@ -1,11 +1,11 @@
 {
   "compilerOptions": {
     "declaration": true,
-    "emitDeclarationOnly": true,
     "esModuleInterop": true,
     "isolatedModules": true,
     "lib": ["ES2019"],
     "module": "CommonJS",
+    "noEmit": true,
     "outDir": "./dist",
     "skipLibCheck": true,
     "strict": true,

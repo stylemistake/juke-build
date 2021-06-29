@@ -19,8 +19,8 @@
     "./dist"
   ],
   "scripts": {
-    "prepack": "yarn run build",
-    "build": "tsc && webpack",
+    "prepack": "./build.cjs build",
+    "build": "./build.cjs build",
     "test": "ts-node test/index.ts"
   },
   "devDependencies": {
@@ -28,10 +28,12 @@
     "@babel/preset-env": "^7.14.7",
     "@babel/preset-typescript": "^7.14.5",
     "@types/glob": "^7.1.3",
+    "@types/minimatch": "^3.0.4",
     "@types/node": "^14.17.4",
     "@types/webpack": "^5.28.0",
     "babel-loader": "^8.2.2",
     "chalk": "^4.1.1",
+    "dts-bundle-generator": "^5.9.0",
     "glob": "^7.1.7",
     "stringcase": "^4.3.1",
     "ts-node": "^9.1.1",
