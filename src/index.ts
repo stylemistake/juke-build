@@ -1,13 +1,13 @@
 import _chalk from 'chalk';
 import fs from 'fs';
 import { glob as _glob } from 'glob';
-import { exec } from './exec';
+import { exec, ExitCode } from './exec';
 import { logger } from './logger';
 import { createParameter as _createParameter, Parameter, ParameterCreator } from './parameter';
 import { runner, RunnerConfig } from './runner';
 import { createTarget as _createTarget, Target, TargetCreator } from './target';
 
-export { exec };
+export { exec, ExitCode };
 export { logger };
 
 export const chalk = _chalk;

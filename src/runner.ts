@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import EventEmitter from 'events';
 import { parseArgs, prepareArgs } from './argparse';
-import { ExitError } from './exec';
+import { ExitCode } from './exec';
 import { compareFiles, File, Glob } from './fs';
 import { logger } from './logger';
 import { Parameter } from './parameter';
@@ -277,7 +277,7 @@ class Worker {
       catch (err) {
         const time = ((Date.now() - startedAt) / 1000) + 's';
         const timeStr = chalk.magenta(time);
-        if (err instanceof ExitError) {
+        if (err instanceof ExitCode) {
           const codeStr = chalk.red(err.code);
           logger.error(`Target '${nameStr}' failed in ${timeStr}, exit code: ${codeStr}`);
         }

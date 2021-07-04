@@ -6173,7 +6173,7 @@ exports.parseArgs = parseArgs;
 
 
 exports.__esModule = true;
-exports.exec = exports.ExitError = void 0;
+exports.exec = exports.ExitCode = void 0;
 
 var _chalk = _interopRequireDefault(__webpack_require__(/*! chalk */ "./.yarn/cache/chalk-npm-4.1.1-f1ce6bae57-445c12db7a.zip/node_modules/chalk/source/index.js"));
 
@@ -6242,7 +6242,7 @@ const exceptionHandler = err => {
 process.on('unhandledRejection', exceptionHandler);
 process.on('uncaughtException', exceptionHandler);
 
-class ExitError extends Error {
+class ExitCode extends Error {
   constructor(code, signal) {
     super('Process exited with code: ' + code);
     this.code = null;
@@ -6253,7 +6253,7 @@ class ExitError extends Error {
 
 }
 
-exports.ExitError = ExitError;
+exports.ExitCode = ExitCode;
 
 const exec = (executable, args = [], options = {}) => {
   const {
@@ -6299,7 +6299,7 @@ const exec = (executable, args = [], options = {}) => {
       children.delete(child);
 
       if (code !== 0 && canThrow) {
-        const error = new ExitError(code);
+        const error = new ExitCode(code);
         error.code = code;
         error.signal = signal;
         reject(error);
@@ -6897,7 +6897,7 @@ class Worker {
 
         const timeStr = _chalk.default.magenta(time);
 
-        if (err instanceof _exec.ExitError) {
+        if (err instanceof _exec.ExitCode) {
           const codeStr = _chalk.default.red(err.code);
 
           _logger.logger.error(`Target '${nameStr}' failed in ${timeStr}, exit code: ${codeStr}`);
@@ -7112,6 +7112,7 @@ var _glob2 = __webpack_require__(/*! glob */ "./.yarn/cache/glob-npm-7.1.7-5698a
 var _exec = __webpack_require__(/*! ./exec */ "./src/exec.ts");
 
 exports.exec = _exec.exec;
+exports.ExitCode = _exec.ExitCode;
 
 var _logger = __webpack_require__(/*! ./logger */ "./src/logger.ts");
 

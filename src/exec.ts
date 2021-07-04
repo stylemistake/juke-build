@@ -55,7 +55,7 @@ const exceptionHandler = (err: unknown) => {
 process.on('unhandledRejection', exceptionHandler);
 process.on('uncaughtException', exceptionHandler);
 
-export class ExitError extends Error {
+export class ExitCode extends Error {
   code: number | null = null;
   signal: string | null = null;
 
@@ -135,7 +135,7 @@ export const exec = (
     child.on('exit', (code, signal) => {
       children.delete(child);
       if (code !== 0 && canThrow) {
-        const error = new ExitError(code);
+        const error = new ExitCode(code);
         error.code = code;
         error.signal = signal;
         reject(error);

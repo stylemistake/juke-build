@@ -5,6 +5,11 @@
 import _chalk from 'chalk';
 import { SpawnOptionsWithoutStdio } from 'child_process';
 
+export declare class ExitCode extends Error {
+	code: number | null;
+	signal: string | null;
+	constructor(code: number | null, signal?: string | null);
+}
 export declare type ExecOptions = SpawnOptionsWithoutStdio & {
 	/**
 	 * If `true`, this exec call will not pipe its output to stdio.
