@@ -23,11 +23,11 @@ if [[ ${from_git} == "0" ]]; then
   yarn release-tool version
 fi
 
-echo "=> Publishing"
-yarn npm publish
-
 echo "=> Pushing to git"
 git push
 git push --tags
+
+echo "=> Publishing"
+yarn npm publish
 
 echo "=> Done"
