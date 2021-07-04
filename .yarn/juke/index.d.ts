@@ -5,7 +5,31 @@
 import _chalk from 'chalk';
 import { SpawnOptionsWithoutStdio } from 'child_process';
 
-export declare const exec: (executable: string, args?: string[], options?: SpawnOptionsWithoutStdio) => Promise<void>;
+export declare type ExecOptions = SpawnOptionsWithoutStdio & {
+	/**
+	 * If `true`, this exec call will not pipe its output to stdio.
+	 * @default false
+	 */
+	silent?: boolean;
+	/**
+	 * Throw an exception on non-zero exit code.
+	 * @default true
+	 */
+	throw?: boolean;
+};
+export declare type ExecReturn = {
+	/** Exit code of the program. */
+	code: number | null;
+	/** Signal received by the program which caused it to exit. */
+	signal: NodeJS.Signals | null;
+	/** Output collected from `stdout` */
+	stdout: string;
+	/** Output collected from `stderr` */
+	stderr: string;
+	/** A combined output collected from `stdout` and `stderr`. */
+	combined: string;
+};
+export declare const exec: (executable: string, args?: string[], options?: ExecOptions) => Promise<ExecReturn>;
 export declare const logger: {
 	log: (...args: unknown[]) => void;
 	error: (...args: unknown[]) => void;

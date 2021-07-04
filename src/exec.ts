@@ -1,3 +1,4 @@
+import chalk from 'chalk';
 import { ChildProcess, spawn, SpawnOptionsWithoutStdio } from 'child_process';
 import { resolve as resolvePath } from 'path';
 import { stat } from './fs';
@@ -57,37 +58,96 @@ process.on('uncaughtException', exceptionHandler);
 export class ExitError extends Error {
   code: number | null = null;
   signal: string | null = null;
+
+  constructor(code: number | null, signal?: string | null) {
+    super('Process exited with code: ' + code);
+    this.code = code;
+    this.signal = signal ?? null;
+  }
 }
+
+export type ExecOptions = SpawnOptionsWithoutStdio & {
+  /**
+   * If `true`, this exec call will not pipe its output to stdio.
+   * @default false
+   */
+  silent?: boolean;
+  /**
+   * Throw an exception on non-zero exit code.
+   * @default true
+   */
+  throw?: boolean;
+};
+
+export type ExecReturn = {
+  /** Exit code of the program. */
+  code: number | null;
+  /** Signal received by the program which caused it to exit. */
+  signal: NodeJS.Signals | null;
+  /** Output collected from `stdout` */
+  stdout: string;
+  /** Output collected from `stderr` */
+  stderr: string;
+  /** A combined output collected from `stdout` and `stderr`. */
+  combined: string;
+};
 
 export const exec = (
   executable: string,
   args: string[] = [],
-  options: SpawnOptionsWithoutStdio = {},
+  options: ExecOptions = {},
 ) => {
-  return new Promise<void>((resolve, reject) => {
+  const {
+    silent = false,
+    throw: canThrow = true,
+    ...spawnOptions
+  } = options;
+  return new Promise<ExecReturn>((resolve, reject) => {
     // If executable exists relative to the current directory,
     // use that executable, otherwise spawn should fall back to
     // running it from PATH.
     if (stat(executable)) {
       executable = resolvePath(executable);
     }
-    const child = spawn(executable, args, options);
+    if (process.env.JUKE_DEBUG) {
+      console.log(chalk.grey('$', executable, ...args));
+    }
+    const child = spawn(executable, args, spawnOptions);
     children.add(child);
-    child.stdout.pipe(process.stdout, { end: false });
-    child.stderr.pipe(process.stderr, { end: false });
-    child.stdin.end();
+    let stdout = '';
+    let stderr = '';
+    let combined = '';
+    child.stdout.on('data', (data) => {
+      if (!silent) {
+        process.stdout.write(data);
+      }
+      stdout += data;
+      combined += data;
+    });
+    child.stderr.on('data', (data) => {
+      if (!silent) {
+        process.stderr.write(data);
+      }
+      stderr += data;
+      combined += data;
+    });
     child.on('error', (err) => reject(err));
     child.on('exit', (code, signal) => {
       children.delete(child);
-      if (code !== 0) {
-        const error = new ExitError('Process exited with code: ' + code);
+      if (code !== 0 && canThrow) {
+        const error = new ExitError(code);
         error.code = code;
         error.signal = signal;
         reject(error);
+        return;
       }
-      else {
-        resolve();
-      }
+      resolve({
+        code,
+        signal,
+        stdout,
+        stderr,
+        combined,
+      });
     });
   });
 };

@@ -9,6 +9,8 @@ const yarn = (...args) => Juke.exec('node', [
   ...args,
 ]);
 
+const rm = (...args) => Juke.exec('rm', args);
+
 const YarnTarget = Juke.createTarget({
   name: 'yarn',
   executes: () => yarn('install'),
@@ -43,6 +45,17 @@ const TscTarget = Juke.createTarget({
 const BuildTarget = Juke.createTarget({
   name: 'build',
   dependsOn: [TscTarget, DtsTarget, BundleTarget],
+});
+
+const Clean = Juke.createTarget({
+  name: 'clean',
+  executes: async () => {
+    await rm('-rf', '.yarn/cache');
+    await rm('-rf', '.yarn/install-state.gz');
+    await rm('-f', '.pnp.js');
+    await rm('-rf', 'dist');
+    await rm('-rf', 'node_modules');
+  },
 });
 
 Juke.setup({

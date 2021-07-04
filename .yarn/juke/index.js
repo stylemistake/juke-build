@@ -6175,11 +6175,15 @@ exports.parseArgs = parseArgs;
 exports.__esModule = true;
 exports.exec = exports.ExitError = void 0;
 
+var _chalk = _interopRequireDefault(__webpack_require__(/*! chalk */ "./.yarn/cache/chalk-npm-4.1.1-f1ce6bae57-445c12db7a.zip/node_modules/chalk/source/index.js"));
+
 var _child_process = __webpack_require__(/*! child_process */ "child_process");
 
 var _path = __webpack_require__(/*! path */ "path");
 
 var _fs = __webpack_require__(/*! ./fs */ "./src/fs.ts");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 const children = new Set();
 
@@ -6239,10 +6243,12 @@ process.on('unhandledRejection', exceptionHandler);
 process.on('uncaughtException', exceptionHandler);
 
 class ExitError extends Error {
-  constructor(...args) {
-    super(...args);
+  constructor(code, signal) {
+    super('Process exited with code: ' + code);
     this.code = null;
     this.signal = null;
+    this.code = code;
+    this.signal = signal != null ? signal : null;
   }
 
 }
@@ -6250,6 +6256,11 @@ class ExitError extends Error {
 exports.ExitError = ExitError;
 
 const exec = (executable, args = [], options = {}) => {
+  const {
+    silent = false,
+    throw: canThrow = true,
+    ...spawnOptions
+  } = options;
   return new Promise((resolve, reject) => {
     // If executable exists relative to the current directory,
     // use that executable, otherwise spawn should fall back to
@@ -6258,27 +6269,50 @@ const exec = (executable, args = [], options = {}) => {
       executable = (0, _path.resolve)(executable);
     }
 
-    const child = (0, _child_process.spawn)(executable, args, options);
+    if (process.env.JUKE_DEBUG) {
+      console.log(_chalk.default.grey('$', executable, ...args));
+    }
+
+    const child = (0, _child_process.spawn)(executable, args, spawnOptions);
     children.add(child);
-    child.stdout.pipe(process.stdout, {
-      end: false
+    let stdout = '';
+    let stderr = '';
+    let combined = '';
+    child.stdout.on('data', data => {
+      if (!silent) {
+        process.stdout.write(data);
+      }
+
+      stdout += data;
+      combined += data;
     });
-    child.stderr.pipe(process.stderr, {
-      end: false
+    child.stderr.on('data', data => {
+      if (!silent) {
+        process.stderr.write(data);
+      }
+
+      stderr += data;
+      combined += data;
     });
-    child.stdin.end();
     child.on('error', err => reject(err));
     child.on('exit', (code, signal) => {
       children.delete(child);
 
-      if (code !== 0) {
-        const error = new ExitError('Process exited with code: ' + code);
+      if (code !== 0 && canThrow) {
+        const error = new ExitError(code);
         error.code = code;
         error.signal = signal;
         reject(error);
-      } else {
-        resolve();
+        return;
       }
+
+      resolve({
+        code,
+        signal,
+        stdout,
+        stderr,
+        combined
+      });
     });
   });
 };
