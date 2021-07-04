@@ -172,18 +172,43 @@ const Target = Juke.createTarget({
 
 ### Execute an external program
 
-Juke provides a handy `Juke.exec` helper. It currently does not return
-anything (besides `Promise<void>`), and it throws if program has exited
-with a non-zero exit code (or was killed by a non-EXIT signal). If uncatched,
-error propagates through Juke and puts dependent targets into a failed state.
+Juke provides a handy `Juke.exec` helper.
 
 ```ts
 const Target = Juke.createTarget({
   name: 'foo',
   executes: async () => {
-    await Juke.exec('yarn', ['install'])
+    await Juke.exec('yarn', ['install']);
   },
 });
+```
+
+On program completion, you get its stdout and stderr. In case, when you need
+to run a program just to parse its output, you can set a `silent` option to
+stop it from piping its output to `stdio`.
+
+```ts
+const { stdout, stderr, combined } = await Juke.exec(command, ...args, {
+  silent: true,
+});
+```
+
+It throws by default if program has exited with a non-zero exit code
+(or was killed by a non-EXIT signal). If uncatched, error propagates
+through Juke and puts dependent targets into a failed state.
+
+You can disable this behavior via:
+
+```ts
+const { code } = Juke.exec(command, ...args, {
+  throw: false,
+});
+```
+
+You can also simulate an exit code by rethrowing it yourself.
+
+```ts
+throw new Juke.ExitCode(1);
 ```
 
 ### Run the build

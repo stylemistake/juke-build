@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.5.0] - 2021-07-04
+
+### Added
+
+- `Juke.exec` now returns useful data on completion, like `code`, `stdout`, `stderr` and `combined` (which is `stdout` + `stderr`).
+- `Juke.exec` accepts two new options as the last argument:
+  - `silent` - If `true`, disables piping of its output to `stdout` and `stderr`.
+  - `throw` - If `false`, it won't throw an exception on a non-zero exit code. Useful if you want to analyze the exit code via it's `code` variable it returns.
+- `Juke.ExitCode` constructor is exposed in case if you want to throw a custom exit code in the `executes` function and fail the target.
+  - It is thrown like this: `throw new Juke.ExitCode(1)`
+
+### Changed
+
+With the help of [dts-bundle-generator](https://github.com/timocov/dts-bundle-generator),
+Juke build is now only two files:
+- `dist/index.js`
+- `dist/index.d.ts`
+
 ## [0.4.0] - 2021-06-24
 
 ### Added
