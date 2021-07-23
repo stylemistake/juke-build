@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.6.1] - 2021-07-23
+## [0.6.2] - 2021-07-23
 
 > Re-released due to issues with packaging. Updated local juke build binary and removed unnecessary console logs.
 

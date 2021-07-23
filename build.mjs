@@ -3,7 +3,7 @@ import { createRequire } from 'module';
 import fs from 'fs';
 
 const require = createRequire(import.meta.url);
-const Juke = require('./dist/index.cjs');
+const Juke = require('./.yarn/juke/index.cjs');
 
 process.chdir(new URL('.', import.meta.url).pathname);
 
@@ -59,30 +59,13 @@ export const TscTarget = Juke.createTarget({
   executes: () => yarn('tsc'),
 });
 
-export const PackageJsonTarget = Juke.createTarget({
-  executes: async () => {
-    const pkg = require('./package.json');
-    delete pkg.scripts;
-    delete pkg.devDependencies;
-    delete pkg.files;
-    delete pkg.packageManager;
-    pkg.types = pkg.types.replace('dist/', '');
-    pkg.main = pkg.main.replace('dist/', '');
-    try {
-      fs.mkdirSync('dist');
-    }
-    catch {}
-    fs.writeFileSync('dist/package.json', JSON.stringify(pkg, null, 2) + '\n');
-  },
-});
-
 export const UpdateLocalParameter = Juke.createParameter({
   type: 'boolean',
   alias: 'u',
 });
 
 export const BuildTarget = Juke.createTarget({
-  dependsOn: [TscTarget, DtsTarget, BundleTarget, PackageJsonTarget],
+  dependsOn: [TscTarget, DtsTarget, BundleTarget],
   executes: async ({ get }) => {
     if (get(UpdateLocalParameter)) {
       Juke.logger.info('Updating local Juke version');
