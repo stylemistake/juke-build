@@ -3,13 +3,13 @@
 > The AKE-less General Purpose Build System with JavaScript DSL for Node.js platform.
 > Inspired by [NUKE](https://nuke.build/).
 
-This project is a work in progress, take a look at our [roadmap](https://github.com/stylemistake/juke-build/projects/1).
+This project is reaching a mature stage, although a lot of features are still in development. Take a look at our [roadmap](https://github.com/stylemistake/juke-build/projects/1).
 
 ## Project goals
 
 ### Simplicity
 
-Everything should be as simple as possible in all technical aspects. Builds are written in pure JavaScript (TypeScript is supported) and provide only the bare minimum for getting the job done.
+Everything should be as simple as possible in all technical aspects. Builds are written in pure JavaScript and provide only the bare minimum for getting the job done. TypeScript is supported, but not required.
 
 Currently it packs the following:
 
