@@ -16,21 +16,31 @@ type ExecutesFn = WithExecutionContext<unknown>;
 type OnlyWhenFn = WithExecutionContext<BooleanLike>;
 export type FileIo = WithOptionalExecutionContext<(string | BooleanLike)[]>;
 
-export type Target = {
-  name: string;
-  dependsOn: DependsOn;
-  executes?: ExecutesFn;
-  inputs: FileIo;
-  outputs: FileIo;
-  parameters: Parameter[];
-  onlyWhen?: OnlyWhenFn;
-};
+export class Target {
+  public name?: string;
+  public dependsOn: DependsOn;
+  public executes?: ExecutesFn;
+  public inputs: FileIo;
+  public outputs: FileIo;
+  public parameters: Parameter[];
+  public onlyWhen?: OnlyWhenFn;
+
+  constructor(target: Target) {
+    this.name = target.name;
+    this.dependsOn = target.dependsOn;
+    this.executes = target.executes;
+    this.inputs = target.inputs;
+    this.outputs = target.outputs;
+    this.parameters = target.parameters;
+    this.onlyWhen = target.onlyWhen;
+  }
+}
 
 export type TargetConfig = {
   /**
    * Target name. This parameter is required.
    */
-  name: string;
+  name?: string;
   /**
    * Dependencies for this target. They will be ran before executing this
    * target, and may run in parallel.
@@ -72,7 +82,7 @@ export type TargetConfig = {
 
 export type TargetCreator = (target: TargetConfig) => Target;
 
-export const createTarget: TargetCreator = (target) => ({
+export const createTarget: TargetCreator = (target) => new Target({
   name: target.name,
   dependsOn: target.dependsOn ?? [],
   executes: target.executes,

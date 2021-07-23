@@ -1,4 +1,4 @@
-import { camelcase, constcase, spinalcase } from 'stringcase';
+import { toKebabCase, toConstCase, toCamelCase } from './string';
 
 export type ParameterType = (
   string
@@ -32,9 +32,9 @@ export type ParameterMap = Map<Parameter, unknown[]>;
 
 export type ParameterConfig<T extends ParameterStringType> = {
   /**
-   * Parameter name, in "camelCase".
+   * Parameter name, as it would be used in CLI.
    */
-  readonly name: string;
+  readonly name?: string;
 
   /**
    * Parameter type, one of:
@@ -66,9 +66,9 @@ export const createParameter: ParameterCreator = (config) => (
 
 export class Parameter<T extends ParameterType = any> {
   constructor(
-    readonly name: string,
-    readonly type: ParameterStringType,
-    readonly alias?: string,
+    public name: string | undefined,
+    public type: ParameterStringType,
+    public alias?: string,
   ) {}
 
   isString(): T extends string | string[] ? true : false {
@@ -88,14 +88,17 @@ export class Parameter<T extends ParameterType = any> {
   }
 
   toKebabCase() {
-    return spinalcase(this.name);
+    if (!this.name) return;
+    return toKebabCase(this.name);
   }
 
   toConstCase() {
-    return constcase(this.name);
+    if (!this.name) return;
+    return toConstCase(this.name);
   }
 
   toCamelCase() {
-    return camelcase(this.name);
+    if (!this.name) return;
+    return toCamelCase(this.name);
   }
 }

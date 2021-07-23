@@ -26,7 +26,6 @@ export const runner = new class Runner {
   }
 
   async start() {
-
     const startedAt = Date.now();
 
     // Parse arguments
@@ -41,12 +40,23 @@ export const runner = new class Runner {
     const { globalFlags, taskArgs } = prepareArgs(process.argv.slice(2));
     const globalParameterMap = parseArgs(globalFlags, this.parameters);
     const targetsToRun: Map<Target, TargetMeta> = new Map();
+
+    const showListOfTargets = () => logger.info(
+      'Available targets:\n'
+      + this.targets.map((t) => ' - ' + chalk.cyan(t.name)).join('\n')
+    );
+
+    if (globalFlags.includes('-h') || globalFlags.includes('--help')) {
+      showListOfTargets();
+      process.exit(1);
+    }
+
     for (const [taskName, ...args] of taskArgs) {
       const target = this.targets.find((t) => t.name === taskName);
       if (!target) {
         const nameStr = chalk.cyan(taskName);
         logger.error(`Task '${nameStr}' was not found.`);
-        logger.log('Available tasks:', ...this.targets.map((t) => t.name));
+        showListOfTargets();
         process.exit(1);
       }
       targetsToRun.set(target, { args });
@@ -55,7 +65,7 @@ export const runner = new class Runner {
     if (targetsToRun.size === 0) {
       if (!this.defaultTarget) {
         logger.error(`No task was provided in arguments.`);
-        logger.log('Available tasks:', ...this.targets.map((t) => t.name));
+        showListOfTargets();
         process.exit(1);
       }
       targetsToRun.set(this.defaultTarget, {

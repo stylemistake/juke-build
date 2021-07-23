@@ -4,6 +4,7 @@
 
 import _chalk from 'chalk';
 import { SpawnOptionsWithoutStdio } from 'child_process';
+import EventEmitter from 'events';
 
 export declare class ExitCode extends Error {
 	code: number | null;
@@ -48,9 +49,9 @@ export declare type ParameterStringType = ("string" | "string[]" | "number" | "n
 export declare type ParameterTypeByString<T extends ParameterStringType> = (T extends "string" ? string : T extends "string[]" ? string[] : T extends "number" ? number : T extends "number[]" ? number[] : T extends "boolean" ? boolean : T extends "boolean[]" ? boolean[] : never);
 export declare type ParameterConfig<T extends ParameterStringType> = {
 	/**
-	 * Parameter name, in "camelCase".
+	 * Parameter name, as it would be used in CLI.
 	 */
-	readonly name: string;
+	readonly name?: string;
 	/**
 	 * Parameter type, one of:
 	 * - `string`
@@ -67,18 +68,19 @@ export declare type ParameterConfig<T extends ParameterStringType> = {
 	readonly alias?: string;
 };
 export declare type ParameterCreator = <T extends ParameterStringType>(config: ParameterConfig<T>) => Parameter<ParameterTypeByString<T>>;
+export declare const createParameter: ParameterCreator;
 declare class Parameter<T extends ParameterType = any> {
-	readonly name: string;
-	readonly type: ParameterStringType;
-	readonly alias?: string | undefined;
-	constructor(name: string, type: ParameterStringType, alias?: string | undefined);
+	name: string | undefined;
+	type: ParameterStringType;
+	alias?: string | undefined;
+	constructor(name: string | undefined, type: ParameterStringType, alias?: string | undefined);
 	isString(): T extends string | string[] ? true : false;
 	isNumber(): T extends number | number[] ? true : false;
 	isBoolean(): T extends boolean | boolean[] ? true : false;
 	isArray(): T extends Array<unknown> ? true : false;
-	toKebabCase(): string;
-	toConstCase(): string;
-	toCamelCase(): string;
+	toKebabCase(): string | undefined;
+	toConstCase(): string | undefined;
+	toCamelCase(): string | undefined;
 }
 export declare type ExecutionContext = {
 	/** Get parameter value. */
@@ -91,20 +93,21 @@ export declare type DependsOn = WithOptionalExecutionContext<(Target | BooleanLi
 export declare type ExecutesFn = WithExecutionContext<unknown>;
 export declare type OnlyWhenFn = WithExecutionContext<BooleanLike>;
 export declare type FileIo = WithOptionalExecutionContext<(string | BooleanLike)[]>;
-export declare type Target = {
-	name: string;
+declare class Target {
+	name?: string;
 	dependsOn: DependsOn;
 	executes?: ExecutesFn;
 	inputs: FileIo;
 	outputs: FileIo;
 	parameters: Parameter[];
 	onlyWhen?: OnlyWhenFn;
-};
+	constructor(target: Target);
+}
 export declare type TargetConfig = {
 	/**
 	 * Target name. This parameter is required.
 	 */
-	name: string;
+	name?: string;
 	/**
 	 * Dependencies for this target. They will be ran before executing this
 	 * target, and may run in parallel.
@@ -144,11 +147,37 @@ export declare type TargetConfig = {
 	onlyWhen?: OnlyWhenFn;
 };
 export declare type TargetCreator = (target: TargetConfig) => Target;
+export declare const createTarget: TargetCreator;
 export declare type RunnerConfig = {
 	targets?: Target[];
 	default?: Target;
 	parameters?: Parameter[];
 };
+export declare const runner: {
+	defaultTarget?: Target | undefined;
+	targets: Target[];
+	parameters: Parameter[];
+	workers: Worker[];
+	configure(config: RunnerConfig): void;
+	start(): Promise<number>;
+};
+declare class Worker {
+	readonly target: Target;
+	readonly context: ExecutionContext;
+	readonly dependsOn: Target[];
+	dependencies: Set<Target>;
+	generator?: AsyncGenerator;
+	emitter: EventEmitter;
+	hasFailed: boolean;
+	constructor(target: Target, context: ExecutionContext, dependsOn: Target[]);
+	resolveDependency(target: Target): void;
+	rejectDependency(target: Target): void;
+	start(): void;
+	onFinish(fn: () => void): void;
+	onFail(fn: () => void): void;
+	private debugLog;
+	private process;
+}
 export declare const chalk: _chalk.Chalk & _chalk.ChalkFunction & {
 	supportsColor: false | _chalk.ColorSupport;
 	Level: _chalk.Level;
@@ -161,15 +190,16 @@ export declare const chalk: _chalk.Chalk & _chalk.ChalkFunction & {
 	};
 };
 export declare const glob: typeof import("glob");
+export declare type SetupConfig = {
+	file: string;
+};
 /**
  * Configures Juke Build and starts executing targets.
  *
  * @param config Juke Build configuration.
  * @returns Exit code of the whole runner process.
  */
-export declare const setup: (config?: RunnerConfig) => Promise<number>;
-export declare const createTarget: TargetCreator;
-export declare const createParameter: ParameterCreator;
+export declare const setup: (config: SetupConfig) => void;
 export declare const sleep: (time: number) => Promise<unknown>;
 /**
  * Resolves a glob pattern and returns files that are safe
