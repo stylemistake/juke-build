@@ -62,7 +62,7 @@ export class ExitCode extends Error {
   constructor(code: number | null, signal?: string | null) {
     super('Process exited with code: ' + code);
     this.code = code;
-    this.signal = signal ?? null;
+    this.signal = signal || null;
   }
 }
 

@@ -44,13 +44,17 @@ export const BundleTarget = Juke.createTarget({
       bundle: true,
       format: 'cjs',
       platform: 'node',
+      target: 'node14',
+      external: ['module'],
       plugins: [pnpPlugin()],
       entryPoints: ['src/index.ts'],
       outfile: 'dist/index.cjs',
     });
-    const content = fs.readFileSync('dist/index.cjs', 'utf-8')
-      .replaceAll(process.cwd() + '/.yarn/cache/', '');
-    fs.writeFileSync('dist/index.cjs', content);
+    if (String.prototype.replaceAll) {
+      const content = fs.readFileSync('dist/index.cjs', 'utf-8')
+        .replaceAll(process.cwd() + '/.yarn/cache/', '');
+      fs.writeFileSync('dist/index.cjs', content);
+    }
   },
 });
 
@@ -69,7 +73,7 @@ export const BuildTarget = Juke.createTarget({
   executes: async ({ get }) => {
     if (get(UpdateLocalParameter)) {
       Juke.logger.info('Updating local Juke version');
-      for (const file of ['index.cjs', 'index.d.ts', 'package.json']) {
+      for (const file of ['index.cjs', 'index.d.ts']) {
         fs.copyFileSync(`dist/${file}`, `.yarn/juke/${file}`);
       }
     }

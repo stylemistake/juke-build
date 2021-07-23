@@ -20,8 +20,8 @@ export const runner = new class Runner {
   workers: Worker[] = [];
 
   configure(config: RunnerConfig) {
-    this.targets = config.targets ?? [];
-    this.parameters = config.parameters ?? [];
+    this.targets = config.targets || [];
+    this.parameters = config.parameters || [];
     this.defaultTarget = config.default;
   }
 
@@ -88,13 +88,17 @@ export const runner = new class Runner {
         const localParameterMap = parseArgs(meta.args, target.parameters);
         meta.context = {
           get: (parameter): any => {
-            const value = localParameterMap.get(parameter)
-              ?? globalParameterMap.get(parameter);
+            // TODO: Revert to a14df4f once Node v12 support is dropped.
+            let value: unknown[] | undefined = localParameterMap.get(parameter);
+            if (value === undefined) {
+              value = globalParameterMap.get(parameter);
+            }
             if (parameter.isArray()) {
-              return value ?? [];
+              return value || [];
             }
             else {
-              return value?.[0] ?? null;
+              const returnValue = value && value[0];
+              return returnValue !== undefined ? returnValue : null;
             }
           },
         };

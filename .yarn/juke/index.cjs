@@ -1,10 +1,39 @@
 var __create = Object.create;
 var __defProp = Object.defineProperty;
+var __defProps = Object.defineProperties;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
 var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getOwnPropSymbols = Object.getOwnPropertySymbols;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __propIsEnum = Object.prototype.propertyIsEnumerable;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __spreadValues = (a, b) => {
+  for (var prop in b || (b = {}))
+    if (__hasOwnProp.call(b, prop))
+      __defNormalProp(a, prop, b[prop]);
+  if (__getOwnPropSymbols)
+    for (var prop of __getOwnPropSymbols(b)) {
+      if (__propIsEnum.call(b, prop))
+        __defNormalProp(a, prop, b[prop]);
+    }
+  return a;
+};
+var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 var __markAsModule = (target) => __defProp(target, "__esModule", { value: true });
+var __objRest = (source, exclude) => {
+  var target = {};
+  for (var prop in source)
+    if (__hasOwnProp.call(source, prop) && exclude.indexOf(prop) < 0)
+      target[prop] = source[prop];
+  if (source != null && __getOwnPropSymbols)
+    for (var prop of __getOwnPropSymbols(source)) {
+      if (exclude.indexOf(prop) < 0 && __propIsEnum.call(source, prop))
+        target[prop] = source[prop];
+    }
+  return target;
+};
 var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[Object.keys(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
@@ -1475,8 +1504,7 @@ var require_source = __commonJS({
       };
     }
     var proto = Object.defineProperties(() => {
-    }, {
-      ...styles,
+    }, __spreadProps(__spreadValues({}, styles), {
       level: {
         enumerable: true,
         get() {
@@ -1486,7 +1514,7 @@ var require_source = __commonJS({
           this._generator.level = level;
         }
       }
-    });
+    }));
     var createStyler = (open, close, parent) => {
       let openAll;
       let closeAll;
@@ -4294,7 +4322,7 @@ var import_glob2 = __toModule(require_glob());
 var import_module = __toModule(require("module"));
 
 // pnp:/home/style/Documents/Projects/stylemistake/juke-build/package.json
-var version = "0.6.0";
+var version = "0.6.2";
 
 // pnp:/home/style/Documents/Projects/stylemistake/juke-build/src/exec.ts
 var import_chalk = __toModule(require_source());
@@ -4431,15 +4459,17 @@ var ExitCode = class extends Error {
     this.code = null;
     this.signal = null;
     this.code = code;
-    this.signal = signal ?? null;
+    this.signal = signal || null;
   }
 };
 var exec = (executable, args = [], options = {}) => {
-  const {
+  const _a = options, {
     silent = false,
-    throw: canThrow = true,
-    ...spawnOptions
-  } = options;
+    throw: canThrow = true
+  } = _a, spawnOptions = __objRest(_a, [
+    "silent",
+    "throw"
+  ]);
   return new Promise((resolve, reject) => {
     if (stat(executable)) {
       executable = (0, import_path.resolve)(executable);
@@ -4712,8 +4742,8 @@ var runner = new class Runner {
     this.workers = [];
   }
   configure(config) {
-    this.targets = config.targets ?? [];
-    this.parameters = config.parameters ?? [];
+    this.targets = config.targets || [];
+    this.parameters = config.parameters || [];
     this.defaultTarget = config.default;
   }
   async start() {
@@ -4757,11 +4787,15 @@ var runner = new class Runner {
         const localParameterMap = parseArgs(meta.args, target.parameters);
         meta.context = {
           get: (parameter) => {
-            const value = localParameterMap.get(parameter) ?? globalParameterMap.get(parameter);
+            let value = localParameterMap.get(parameter);
+            if (value === void 0) {
+              value = globalParameterMap.get(parameter);
+            }
             if (parameter.isArray()) {
-              return value ?? [];
+              return value || [];
             } else {
-              return value?.[0] ?? null;
+              const returnValue = value && value[0];
+              return returnValue !== void 0 ? returnValue : null;
             }
           }
         };
@@ -4827,13 +4861,15 @@ var Worker = class {
     this.debugLog("ready");
   }
   resolveDependency(target) {
+    var _a;
     this.dependencies.delete(target);
-    this.generator?.next();
+    (_a = this.generator) == null ? void 0 : _a.next();
   }
   rejectDependency(target) {
+    var _a;
     this.dependencies.delete(target);
     this.hasFailed = true;
-    this.generator?.next();
+    (_a = this.generator) == null ? void 0 : _a.next();
   }
   start() {
     this.generator = this.process();
@@ -4943,11 +4979,11 @@ var Target = class {
 };
 var createTarget = (target) => new Target({
   name: target.name,
-  dependsOn: target.dependsOn ?? [],
+  dependsOn: target.dependsOn || [],
   executes: target.executes,
-  inputs: target.inputs ?? [],
-  outputs: target.outputs ?? [],
-  parameters: target.parameters ?? [],
+  inputs: target.inputs || [],
+  outputs: target.outputs || [],
+  parameters: target.parameters || [],
   onlyWhen: target.onlyWhen
 });
 

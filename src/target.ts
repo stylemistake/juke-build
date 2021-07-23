@@ -84,10 +84,10 @@ export type TargetCreator = (target: TargetConfig) => Target;
 
 export const createTarget: TargetCreator = (target) => new Target({
   name: target.name,
-  dependsOn: target.dependsOn ?? [],
+  dependsOn: target.dependsOn || [],
   executes: target.executes,
-  inputs: target.inputs ?? [],
-  outputs: target.outputs ?? [],
-  parameters: target.parameters ?? [],
+  inputs: target.inputs || [],
+  outputs: target.outputs || [],
+  parameters: target.parameters || [],
   onlyWhen: target.onlyWhen,
 });
