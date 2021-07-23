@@ -20,9 +20,7 @@
     "./dist"
   ],
   "scripts": {
-    "prepack": "./build.cjs build",
-    "build": "./build.cjs build",
-    "test": "node test/index.cjs"
+    "prepack": "./build.mjs build"
   },
   "devDependencies": {
     "@types/glob": "^7.1.4",

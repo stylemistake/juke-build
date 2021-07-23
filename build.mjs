@@ -1,11 +1,9 @@
 #!/usr/bin/env node
 import { createRequire } from 'module';
 import fs from 'fs';
-import Juke from './.yarn/juke/index.cjs';
 
 const require = createRequire(import.meta.url);
-
-console.log(process.mainModule);
+const Juke = require('./dist/index.cjs');
 
 process.chdir(new URL('.', import.meta.url).pathname);
 
@@ -50,6 +48,9 @@ export const BundleTarget = Juke.createTarget({
       entryPoints: ['src/index.ts'],
       outfile: 'dist/index.cjs',
     });
+    const content = fs.readFileSync('dist/index.cjs', 'utf-8')
+      .replaceAll(process.cwd() + '/.yarn/cache/', '');
+    fs.writeFileSync('dist/index.cjs', content);
   },
 });
 

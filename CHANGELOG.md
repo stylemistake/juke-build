@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.6.1] - 2021-07-23
+
+> Re-released due to issues with packaging. Updated local juke build binary and removed unnecessary console logs.
+
 ## [0.6.0] - 2021-07-23
 
 ### BREAKING CHANGES
@@ -16,6 +20,10 @@ Juke.setup({ file: import.meta.url });
 // CommonJS variant
 Juke.setup({ file: __filename });
 ```
+
+## [0.5.1] - 2021-07-04
+
+> Re-released due to issues with packaging.
 
 ## [0.5.0] - 2021-07-04
 

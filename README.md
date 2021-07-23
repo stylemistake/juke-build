@@ -42,7 +42,7 @@ Copy contents of the `dist` folder anywhere you want to use Juke (and rename it 
 
 ```ts
 // build.mjs
-import * as Juke from './juke/index.cjs';
+import Juke from './juke/index.cjs';
 
 Juke.setup({ file: import.meta.url });
 
