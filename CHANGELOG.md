@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.7.0] - 2021-07-23
+
+### Added
+
+- Added `args` to execution context
+
+### Changed
+
+- Juke.setup now returns a promise with exit code, same as before
+
 ## [0.6.3] - 2021-07-23
 
 ### Fixed
@@ -12,7 +22,7 @@
 
 ## [0.6.0] - 2021-07-23
 
-### BREAKING CHANGES
+### BREAKING CHANGE
 
 Juke Build now supports ES modules as build scripts, but this also means that the whole thing was redesigned to support named exports. When target/parameter is exported, you may omit the `name` property completely, and it will be automatically picked up from the name of the exported variable.
 

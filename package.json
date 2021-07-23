@@ -1,6 +1,6 @@
 {
   "name": "juke-build",
-  "version": "0.6.3",
+  "version": "0.7.0",
   "description": "The AKE-less Build System for JavaScript and Node.js.",
   "keywords": [
     "build",

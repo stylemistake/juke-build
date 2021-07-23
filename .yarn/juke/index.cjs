@@ -4322,7 +4322,7 @@ var import_glob2 = __toModule(require_glob());
 var import_module = __toModule(require("module"));
 
 // pnp:/home/style/Documents/Projects/stylemistake/juke-build/package.json
-var version = "0.6.3";
+var version = "0.7.0";
 
 // pnp:/home/style/Documents/Projects/stylemistake/juke-build/src/exec.ts
 var import_chalk = __toModule(require_source());
@@ -4751,7 +4751,16 @@ var runner = new class Runner {
     const { globalFlags, taskArgs } = prepareArgs(process.argv.slice(2));
     const globalParameterMap = parseArgs(globalFlags, this.parameters);
     const targetsToRun = new Map();
-    const showListOfTargets = () => logger.info("Available targets:\n" + this.targets.map((t) => " - " + import_chalk3.default.cyan(t.name)).join("\n"));
+    const showListOfTargets = () => {
+      logger.info("Available targets:");
+      for (const target of this.targets) {
+        logger.log(" - " + import_chalk3.default.cyan(target.name));
+      }
+      logger.info("Available parameters:");
+      for (const parameter of this.parameters) {
+        logger.log(" --" + parameter.name + (parameter.alias ? `, -${parameter.alias}` : "") + ` (type: ${parameter.type})`);
+      }
+    };
     if (globalFlags.includes("-h") || globalFlags.includes("--help")) {
       showListOfTargets();
       process.exit(1);
@@ -4797,7 +4806,8 @@ var runner = new class Runner {
               const returnValue = value && value[0];
               return returnValue !== void 0 ? returnValue : null;
             }
-          }
+          },
+          args: meta.args
         };
       }
       if (!meta.dependsOn) {

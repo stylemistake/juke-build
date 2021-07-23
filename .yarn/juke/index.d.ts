@@ -85,6 +85,7 @@ declare class Parameter<T extends ParameterType = any> {
 export declare type ExecutionContext = {
 	/** Get parameter value. */
 	get: <T extends ParameterType>(parameter: Parameter<T>) => (T extends Array<unknown> ? T : T | null);
+	args: string[];
 };
 export declare type BooleanLike = boolean | null | undefined;
 export declare type WithExecutionContext<R> = (context: ExecutionContext) => R | Promise<R>;
