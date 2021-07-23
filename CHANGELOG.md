@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.6.3] - 2021-07-23
+
+### Fixed
+
+- Replaced `??` syntax with a more compatible one for Node 12.
+
 ## [0.6.2] - 2021-07-23
 
 > Re-released due to issues with packaging. Updated local juke build binary and removed unnecessary console logs.
