@@ -5,6 +5,7 @@ export type ExecutionContext = {
   get: <T extends ParameterType>(parameter: Parameter<T>) => (
     T extends Array<unknown> ? T : T | null
   );
+  args: string[];
 };
 
 type BooleanLike = boolean | null | undefined;

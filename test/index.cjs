@@ -9,7 +9,7 @@ const DefineParameter = Juke.createParameter({
 
 const DmTarget = Juke.createTarget({
   parameters: [DefineParameter],
-  executes: async ({ get }) => {
+  executes: async ({ get, args }) => {
     const defines = get(DefineParameter);
     for (const define of defines) {
       Juke.logger.info('Define:', define);
@@ -17,7 +17,7 @@ const DmTarget = Juke.createTarget({
     await Juke.sleep(1000);
     const result = await Juke.exec('echo', ['hello!']);
     if (process.env.JUKE_DEBUG) {
-      console.log(result);
+      console.log({ result, args });
     }
   }
 });

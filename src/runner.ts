@@ -41,10 +41,20 @@ export const runner = new class Runner {
     const globalParameterMap = parseArgs(globalFlags, this.parameters);
     const targetsToRun: Map<Target, TargetMeta> = new Map();
 
-    const showListOfTargets = () => logger.info(
-      'Available targets:\n'
-      + this.targets.map((t) => ' - ' + chalk.cyan(t.name)).join('\n')
-    );
+    const showListOfTargets = () => {
+      logger.info('Available targets:');
+      for (const target of this.targets) {
+        logger.log(' - ' + chalk.cyan(target.name));
+      }
+      logger.info('Available parameters:');
+      for (const parameter of this.parameters) {
+        logger.log(
+          ' --' + parameter.name
+          + (parameter.alias ? `, -${parameter.alias}` : '')
+          + ` (type: ${parameter.type})`
+        );
+      }
+    };
 
     if (globalFlags.includes('-h') || globalFlags.includes('--help')) {
       showListOfTargets();
@@ -101,6 +111,7 @@ export const runner = new class Runner {
               return returnValue !== undefined ? returnValue : null;
             }
           },
+          args: meta.args,
         };
       }
       // Resolve dependencies

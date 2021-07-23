@@ -167,6 +167,16 @@ export const Target = Juke.createTarget({
 });
 ```
 
+If you simply need access to arguments passed to the target, you can simply use the `args` context variable. Note, that you can only pass arguments that begin with `-`, because otherwise they will be treated as targets to build.
+
+```ts
+export const Target = Juke.createTarget({
+  executes: async ({ args }) => {
+    console.log('Passed arguments:', args);
+  },
+});
+```
+
 Context is available on these properties (when using an arrow function syntax):
 
 - `dependsOn`

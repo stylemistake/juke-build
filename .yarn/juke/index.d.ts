@@ -199,7 +199,7 @@ export declare type SetupConfig = {
  * @param config Juke Build configuration.
  * @returns Exit code of the whole runner process.
  */
-export declare const setup: (config: SetupConfig) => void;
+export declare const setup: (config: SetupConfig) => Promise<number>;
 export declare const sleep: (time: number) => Promise<unknown>;
 /**
  * Resolves a glob pattern and returns files that are safe
