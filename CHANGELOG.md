@@ -1,5 +1,22 @@
 # Changelog
 
+## [Unreleased]
+
+### BREAKING CHANGES
+
+Juke Build now supports ES modules as build scripts, but this also means that the whole thing was redesigned to support named exports. When target/parameter is exported, you may omit the `name` property completely, and it will be automatically picked up from the name of the exported variable.
+
+Targets are no longer automatically registered, and you must export them via `export` keyword in ES modules, or `module.exports` in CommonJS.
+
+You must now call `Juke.setup()` to point the executor to the build script that you want to parse/run:
+
+```ts
+// ES modules variant
+Juke.setup({ file: import.meta.url });
+// CommonJS variant
+Juke.setup({ file: __filename });
+```
+
 ## [0.5.0] - 2021-07-04
 
 ### Added

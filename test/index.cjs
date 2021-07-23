@@ -1,13 +1,13 @@
-import * as Juke from '../src';
+const Juke = require('../dist/index.cjs');
+
+Juke.setup({ file: __filename });
 
 const DefineParameter = Juke.createParameter({
   type: 'string[]',
-  name: 'define',
   alias: 'D',
 });
 
 const DmTarget = Juke.createTarget({
-  name: 'dm',
   parameters: [DefineParameter],
   executes: async ({ get }) => {
     const defines = get(DefineParameter);
@@ -23,14 +23,12 @@ const DmTarget = Juke.createTarget({
 });
 
 const TguiTarget = Juke.createTarget({
-  name: 'tgui',
   executes: async () => {
     await Juke.sleep(750);
   },
 });
 
 const AfterTarget = Juke.createTarget({
-  name: 'after',
   dependsOn: async () => [
     DmTarget,
     TguiTarget,
@@ -44,7 +42,6 @@ const AfterTarget = Juke.createTarget({
 });
 
 const LogTarget = Juke.createTarget({
-  name: 'log',
   executes: async () => {
     Juke.logger.error('Testing log error');
     Juke.logger.warn('Testing log warn');
@@ -54,19 +51,16 @@ const LogTarget = Juke.createTarget({
 });
 
 const AlwaysTarget = Juke.createTarget({
-  name: 'always',
   onlyWhen: () => true,
   executes: () => undefined,
 });
 
 const NeverTarget = Juke.createTarget({
-  name: 'never',
   onlyWhen: () => false,
   executes: () => undefined,
 });
 
 const SimpleFileTarget = Juke.createTarget({
-  name: 'simple-file',
   inputs: [
     'non-existing-file',
     true,
@@ -76,7 +70,6 @@ const SimpleFileTarget = Juke.createTarget({
 });
 
 const ConditionalFileTarget = Juke.createTarget({
-  name: 'conditional-file',
   inputs: async () => [
     'non-existing-file',
     true,
@@ -86,7 +79,6 @@ const ConditionalFileTarget = Juke.createTarget({
 });
 
 const AllTarget = Juke.createTarget({
-  name: 'all',
   dependsOn: [
     DmTarget,
     TguiTarget,
@@ -99,6 +91,16 @@ const AllTarget = Juke.createTarget({
   ],
 });
 
-Juke.setup({
+module.exports = {
+  DefineParameter,
+  DmTarget,
+  TguiTarget,
+  AfterTarget,
+  LogTarget,
+  AlwaysTarget,
+  NeverTarget,
+  SimpleFileTarget,
+  ConditionalFileTarget,
+  AllTarget,
   default: AllTarget,
-});
+};

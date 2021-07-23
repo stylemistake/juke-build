@@ -1,84 +1,105 @@
 ![JUKE build](https://github.com/stylemistake/juke-build/blob/master/assets/juke-build.png)
 
-> The AKE-less Build System for JavaScript and Node.js.
+> The AKE-less General Purpose Build System with JavaScript DSL for Node.js platform.
 > Inspired by [NUKE](https://nuke.build/).
 
-This project is a work in progress, take a look at our
-[roadmap](https://github.com/stylemistake/juke-build/projects/1).
+This project is a work in progress, take a look at our [roadmap](https://github.com/stylemistake/juke-build/projects/1).
 
 ## Project goals
 
 ### Simplicity
 
-Everything should be as simple as possible in all technical aspects. Builds
-are written in pure JavaScript and provide only the bare minimum for getting
-the job done.
+Everything should be as simple as possible in all technical aspects. Builds are written in pure JavaScript (TypeScript is supported) and provide only the bare minimum for getting the job done.
 
 Currently it packs the following:
 
 - A robust dependency model between targets
 - File timestamp checker for inputs/outputs
-- Built-in CLI argument (and environment) parser with a strongly typed
-Parameter API.
+- Built-in CLI argument (and environment) parser with a strongly typed Parameter API.
 - Asynchronous execution of external programs via `Juke.exec()`
 
-You can bring your own tools into the mix, e.g. the glorious
-[google/zx](https://github.com/google/zx), or native JavaScript tooling, e.g.
-[webpack](https://webpack.js.org/), with no restrictions imposed by our build
-framework.
+You can bring your own tools into the mix, e.g. the glorious [google/zx](https://github.com/google/zx), or native JavaScript tooling, e.g. [webpack](https://webpack.js.org/), with no restrictions imposed by our build framework.
 
 ### Minimal dependencies
 
-Build system should be native to JavaScript and Node.js, and require nothing
-but the Node.js executable, i.e. no dependency on npm or TypeScript compiler.
+Build system should be native to JavaScript and Node.js, and require nothing but the Node.js executable, i.e. no dependency on npm/yarn or TypeScript compiler.
 
 ### Strongly typed
 
-Strongly typed API with fully instrospectible build scripts that are written
-in plain JavaScript, which allows us to parse the build script and generate
-definition files for tighter integration with other tooling (e.g. CI).
+Strongly typed API with fully instrospectible build scripts that are written in plain JavaScript, which allows us to parse the build script and generate definition files for tighter integration with other tooling (e.g. CI).
 
 ## How to build
 
 ```
-./build.cjs
+./build.mjs
 ```
 
 ## General usage
 
-Copy contents of the `dist` folder anywhere you want to use Juke, then
-create a javascript file for the build script with the following contents:
+Copy contents of the `dist` folder anywhere you want to use Juke (and rename it to `juke`), then create a javascript file for the build script with the following contents (pick one):
+
+**ES modules variant (recommended):**
 
 ```ts
-const Juke = require('./juke');
+// build.mjs
+import * as Juke from './juke/index.cjs';
+
+Juke.setup({ file: import.meta.url });
 
 // TODO: Declare targets here
-
-// Build runs after calling setup.
-Juke.setup();
+export const MyTarget = Juke.createTarget({
+  // ...
+});
 ```
+
+**CommonJS modules variant:**
+
+```ts
+// build.cjs
+const Juke = require('./juke');
+
+Juke.setup({ file: __filename });
+
+// TODO: Declare targets here
+const MyTarget = Juke.createTarget({
+  // ...
+});
+
+// TODO: Export targets here
+module.exports = {
+  MyTarget,
+};
+```
+
+We recommend using an ES module for the build script, because it allows exporting targets/parameters with a much shorter syntax.
 
 ### Create targets
 
-Target is a simple container for your build script, that defines how it should be
-executed in relation to other targets. It may have dependencies on other targets,
-required parameters and various other conditions for executing the target.
-
-All targets must have a `name`, which is used in CLI for specifying the target.
+Target is a simple container for your build script that defines how it should be executed in relation to other targets. It may have dependencies on other targets, and may have various other conditions for executing the target.
 
 ```ts
-const Target = Juke.createTarget({
-  name: 'foo',
+export const Target = Juke.createTarget({
   executes: async () => {
     console.log('Hello, world!');
   },
 });
 ```
 
+> Notice: When referencing an unexported target, it must have a `name` property, which is used in CLI for specifying (and displaying) the target. If you forget to specify a `name`, it will be displayed as `undefined` during execution.
+>
+> Normally, name is derived from the name of the exported variable (minus the `Target` suffix).
+>
+> ```ts
+> const Target = Juke.createTarget({
+>   name: 'foo',
+>   // ...
+> });
+> ```
+
 ### Declare dependencies
 
 ```ts
-const Target = Juke.createTarget({
+export const Target = Juke.createTarget({
   dependsOn: [OtherTarget],
   // ...
 });
@@ -89,25 +110,23 @@ const Target = Juke.createTarget({
 When no target is provided via CLI, Juke will execute the default target.
 
 ```ts
-const Target = Juke.createTarget({ ... });
-
-Juke.setup({
-  default: Target,
+export const Target = Juke.createTarget({
+  // ...
 });
+
+export default Target;
 ```
 
 ### Declare file inputs and outputs
 
-If your target consumes and creates files, you can declare them on the target,
-so it would check whether it actually needs to rebuild.
+If your target consumes and creates files, you can declare them on the target, so it would check whether it actually needs to rebuild.
 
-If any input file is newer than an output file, target will be rebuilt, otherwise
-it will be skipped.
+If any input file is newer than the output file, target will be rebuilt, and skipped otherwise.
 
 Supports globs.
 
 ```ts
-const Target = Juke.createTarget({
+export const Target = Juke.createTarget({
   inputs: ['package.json', 'src/**/*.js'],
   outputs: ['dest/bundle.js'],
   // ...
@@ -116,16 +135,39 @@ const Target = Juke.createTarget({
 
 ### Create parameters
 
-Available parameter types are: `string`, `number` and `boolean`.
-Add a `[]` suffix to the type to make it an array.
+Available parameter types are: `string`, `number` and `boolean`. You may add a `[]` suffix to the type to make it an array.
 
-To provide a parameter via CLI, you can either specify it by name
-(i.e. `--name`), or its alias (i.e. `-N`). If parameter is not `boolean`,
-a value is expected, which you can provide via `--name=value` or `-Nvalue`.
+To provide a parameter via CLI, you can either specify it by name (i.e. `--name`), or its alias (i.e. `-N`). If parameter is not a `boolean` type, value will be expected, which you can provide via `--name=value` or `-Nvalue`.
 
-To fetch the parameter's value, you must use a `get` helper, which is a
-property of the execution context - object that is passed to almost every
-target field in Juke:
+To fetch the parameter's value, you can use the `get` helper, which is exposed on the target's context.
+
+```ts
+export const FileParameter = Juke.createParameter({
+  type: 'string[]',
+  alias: 'f',
+});
+
+export const Target = Juke.createTarget({
+  executes: async ({ get }) => {
+    const files = get(FileParameter);
+    console.log('Parameter values:', files);
+  },
+  // ...
+});
+```
+
+You can also dynamically set up target dependencies using binary expressions:
+
+```ts
+export const Target = Juke.createTarget({
+  dependsOn: ({ get }) => [
+    get(FileParameter).includes('foo') && FooTarget,
+  ],
+  // ...
+});
+```
+
+Context is available on these properties (when using an arrow function syntax):
 
 - `dependsOn`
 - `inputs`
@@ -133,38 +175,24 @@ target field in Juke:
 - `onlyWhen`
 - `executes`
 
-```ts
-const Parameter = Juke.createParameter({
-  name: 'name',
-  type: 'string[]',
-  alias: 'N',
-});
-
-const Target = Juke.createTarget({
-  name: 'foo',
-  parameters: [Parameter],
-  dependsOn: ({ get }) => [
-    get(Parameter).includes('foo') && FooTarget,
-  ],
-  executes: async ({ get }) => {
-    const values = get(Parameter);
-    console.log('Parameter values:', values);
-  },
-  // ...
-});
-```
+> Notice: When referencing an unexported parameter, it must have a `name`, which is used in CLI for specifying the parameter.
+>
+> Normally, name is derived from the name of the exported variable (minus the `Parameter` suffix, if it exists).
+>
+> ```ts
+> const FileParameter = Juke.createParameter({
+>   name: 'file',
+> });
+> ```
 
 ### Conditionally run targets
 
-If you need more control over when the target builds, you can provide a custom
-condition using `onlyWhen`. Target will build only when the condition is
-`true`.
+If you need more control over when the target builds, you can provide a custom condition using `onlyWhen`. Target will build only when the condition is `true`.
 
-Function can be `async` if it has to be, target will wait for all promises to
-resolve.
+Function can be `async` if it has to be, target will wait for all promises to resolve.
 
 ```ts
-const Target = Juke.createTarget({
+export const Target = Juke.createTarget({
   onlyWhen: ({ get }) => get(BuildModeParameter) === BUILD_ALL,
   // ...
 });
@@ -175,17 +203,14 @@ const Target = Juke.createTarget({
 Juke provides a handy `Juke.exec` helper.
 
 ```ts
-const Target = Juke.createTarget({
-  name: 'foo',
+export const Target = Juke.createTarget({
   executes: async () => {
     await Juke.exec('yarn', ['install']);
   },
 });
 ```
 
-On program completion, you get its stdout and stderr. In case, when you need
-to run a program just to parse its output, you can set a `silent` option to
-stop it from piping its output to `stdio`.
+On program completion, you get its stdout and stderr. In case, when you need to run a program just to parse its output, you can set a `silent` option to stop it from piping its output to `stdio`.
 
 ```ts
 const { stdout, stderr, combined } = await Juke.exec(command, ...args, {
@@ -193,9 +218,7 @@ const { stdout, stderr, combined } = await Juke.exec(command, ...args, {
 });
 ```
 
-It throws by default if program has exited with a non-zero exit code
-(or was killed by a non-EXIT signal). If uncatched, error propagates
-through Juke and puts dependent targets into a failed state.
+It throws by default if program has exited with a non-zero exit code (or was killed by a non-EXIT signal). If uncatched, error propagates through Juke and puts dependent targets into a failed state.
 
 You can disable this behavior via:
 
@@ -215,23 +238,19 @@ throw new Juke.ExitCode(1);
 
 You can build targets by specifying their names via CLI.
 
-Every flag that you specify via CLI is transformed into parameters, and their
-names are canonically written in `--kebab-case`.
+Every flag that you specify via CLI is transformed into parameters, and their names are canonically written in `--kebab-case`.
 
 ```
 ./build.js [globalFlags] task-1 [flagsLocalToTask1] task-2 [flagsLocalToTask2]
 ```
 
-To specify an array of parameters, you can simply specify the same flag
-multiple times:
+To specify an array of parameters, you can simply specify the same flag multiple times:
 
 ```
 ./build.js task-1 --foo=A --foo=B
 ```
 
-You can also specify parameters via the environment. Environment variable
-names must be written in `CONSTANT_CASE`. If this parameter is an array,
-you can use a comma to separate the values.
+You can also specify parameters via the environment. Environment variable names must be written in `CONSTANT_CASE`. If this parameter is an array, you can use a comma to separate the values.
 
 ```
 FOO=A,B ./build.js task-1

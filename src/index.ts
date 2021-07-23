@@ -1,6 +1,7 @@
 import _chalk from 'chalk';
 import fs from 'fs';
 import { glob as _glob } from 'glob';
+import { createRequire } from 'module';
 import { version } from '../package.json';
 import { exec, ExitCode } from './exec';
 import { logger } from './logger';
@@ -26,31 +27,55 @@ type SetupConfig = {
  */
 export const setup = (config: SetupConfig) => {
   logger.info(`Juke Build version ${version}`)
+  if (!config.file) {
+    logger.error(`Field 'file' is required in Juke.setup()`);
+    process.exit(1);
+  }
   const buildModule = import(config.file);
   buildModule.then((buildModule) => {
+    const isCommonJs = Boolean(createRequire(config.file).cache[config.file]);
+    if (isCommonJs) {
+      buildModule = buildModule.default;
+    }
     const targets: Target[] = [];
     const parameters: Parameter[] = [];
     for (const name of Object.keys(buildModule)) {
+      if (name === 'default') {
+        continue;
+      }
       const obj = buildModule[name];
       if (obj instanceof Target) {
         if (!obj.name) {
-          obj.name = toKebabCase(name.replace(/Target$/, ''));
+          obj.name = name !== 'Target'
+            ? toKebabCase(name.replace(/Target$/, ''))
+            : 'target';
         }
         targets.push(obj);
         continue;
       }
       if (obj instanceof Parameter) {
         if (!obj.name) {
-          obj.name = toKebabCase(name.replace(/Parameter$/, ''));
+          obj.name = name !== 'Parameter'
+            ? toKebabCase(name.replace(/Parameter$/, ''))
+            : 'parameter';
         }
         parameters.push(obj);
         continue;
       }
     }
+    const DefaultTarget = (
+      buildModule.default
+      || buildModule.DefaultTarget
+      || buildModule.Default
+    );
+    if (DefaultTarget && !(DefaultTarget instanceof Target)) {
+      logger.error(`Default export is not a valid 'Target' object.`);
+      process.exit(1);
+    }
     runner.configure({
       parameters,
       targets,
-      default: buildModule.default,
+      default: DefaultTarget,
     });
     runner.start();
   });

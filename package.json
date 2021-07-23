@@ -22,7 +22,7 @@
   "scripts": {
     "prepack": "./build.cjs build",
     "build": "./build.cjs build",
-    "test": "ts-node test/index.ts"
+    "test": "node test/index.cjs"
   },
   "devDependencies": {
     "@types/glob": "^7.1.4",
@@ -34,7 +34,6 @@
     "esbuild": "^0.12.15",
     "glob": "^7.1.7",
     "stringcase": "^4.3.1",
-    "ts-node": "^10.1.0",
     "typescript": "^4.3.5"
   }
 }

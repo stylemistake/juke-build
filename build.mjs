@@ -5,6 +5,8 @@ import Juke from './.yarn/juke/index.cjs';
 
 const require = createRequire(import.meta.url);
 
+console.log(process.mainModule);
+
 process.chdir(new URL('.', import.meta.url).pathname);
 
 Juke.setup({

@@ -1,4 +1,6 @@
-import * as Juke from '../src';
+const Juke = require('../dist/index.cjs');
+
+Juke.setup({ file: __filename });
 
 const DmTarget = Juke.createTarget({
   name: 'dm',
@@ -31,6 +33,10 @@ const AllTarget = Juke.createTarget({
   ],
 });
 
-Juke.setup({
+module.exports = {
+  DmTarget,
+  TguiTarget,
+  AfterTarget,
+  AllTarget,
   default: AllTarget,
-});
+};
