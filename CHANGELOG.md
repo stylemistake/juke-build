@@ -4,7 +4,7 @@
 
 ### Added
 
-- Added `args` to execution context
+- Added `args` to execution context, which basically passes through all the flags following the target.
 
 ### Changed
 
