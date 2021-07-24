@@ -269,7 +269,7 @@ FOO=A,B ./build.js task-1
 
 ## Examples
 
-[Our own build pipeline](https://github.com/stylemistake/juke-build/blob/master/build.cjs)
+[Our own build pipeline](https://github.com/stylemistake/juke-build/blob/master/build.mjs)
 
 [/tg/station13 build pipeline](https://github.com/tgstation/tgstation/blob/master/tools/build/build.js)
 
