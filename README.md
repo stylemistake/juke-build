@@ -87,14 +87,14 @@ export const Target = Juke.createTarget({
 
 > Notice: When referencing an unexported target, it must have a `name` property, which is used in CLI for specifying (and displaying) the target. If you forget to specify a `name`, it will be displayed as `undefined` during execution.
 >
-> Normally, name is derived from the name of the exported variable (minus the `Target` suffix).
->
 > ```ts
 > const Target = Juke.createTarget({
 >   name: 'foo',
 >   // ...
 > });
 > ```
+>
+> Normally, name is derived from the name of the exported variable (minus the `Target` suffix).
 
 ### Declare dependencies
 
@@ -137,7 +137,7 @@ export const Target = Juke.createTarget({
 
 Available parameter types are: `string`, `number` and `boolean`. You may add a `[]` suffix to the type to make it an array.
 
-To provide a parameter via CLI, you can either specify it by name (i.e. `--name`), or its alias (i.e. `-N`). If parameter is not a `boolean` type, value will be expected, which you can provide via `--name=value` or `-Nvalue`.
+To provide a parameter via CLI, you can either specify it by name (e.g. `--name`), or its alias (e.g. `-N`). If parameter is not a `boolean` type, value will be expected, which you can provide via `--name=value` or `-Nvalue`.
 
 To fetch the parameter's value, you can use the `get` helper, which is exposed on the target's context.
 
@@ -167,7 +167,7 @@ export const Target = Juke.createTarget({
 });
 ```
 
-If you simply need access to arguments passed to the target, you can simply use the `args` context variable. Note, that you can only pass arguments that begin with `-`, because otherwise they will be treated as targets to build.
+If you simply need access to arguments passed to the target, you can use the `args` context variable. Note, that you can only pass arguments that begin with `-` or `--`, because all other arguments are normally treated as targets to build.
 
 ```ts
 export const Target = Juke.createTarget({
@@ -177,7 +177,7 @@ export const Target = Juke.createTarget({
 });
 ```
 
-Context is available on these properties (when using an arrow function syntax):
+Context is available on these properties (when using a function syntax):
 
 - `dependsOn`
 - `inputs`
@@ -187,13 +187,14 @@ Context is available on these properties (when using an arrow function syntax):
 
 > Notice: When referencing an unexported parameter, it must have a `name`, which is used in CLI for specifying the parameter.
 >
-> Normally, name is derived from the name of the exported variable (minus the `Parameter` suffix, if it exists).
->
 > ```ts
 > const FileParameter = Juke.createParameter({
 >   name: 'file',
 > });
 > ```
+>
+> Normally, name is derived from the name of the exported variable (minus the `Parameter` suffix, if it exists).
+
 
 ### Conditionally run targets
 
