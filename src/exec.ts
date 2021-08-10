@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import { ChildProcess, spawn, SpawnOptionsWithoutStdio } from 'child_process';
+import fs from 'fs';
 import { resolve as resolvePath } from 'path';
-import { stat } from './fs';
 
 const children = new Set<ChildProcess>();
 
@@ -106,7 +106,7 @@ export const exec = (
     // If executable exists relative to the current directory,
     // use that executable, otherwise spawn should fall back to
     // running it from PATH.
-    if (stat(executable)) {
+    if (fs.existsSync(executable)) {
       executable = resolvePath(executable);
     }
     if (process.env.JUKE_DEBUG) {

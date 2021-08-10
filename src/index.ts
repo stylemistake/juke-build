@@ -1,22 +1,34 @@
 import _chalk from 'chalk';
-import fs from 'fs';
-import { glob as _glob } from 'glob';
 import { createRequire } from 'module';
 import { version } from '../package.json';
-import { exec, ExitCode } from './exec';
+import { chdir } from './chdir';
 import { logger } from './logger';
 import { createParameter, Parameter } from './parameter';
 import { runner } from './runner';
 import { toKebabCase } from './string';
 import { createTarget, Target } from './target';
 
-export { exec, ExitCode, runner, logger, createParameter, createTarget };
+export { exec, ExitCode } from './exec';
+export { glob, rm } from './fs';
+export {
+  runner,
+  logger,
+  createParameter,
+  Parameter,
+  createTarget,
+  Target,
+  chdir,
+};
 
 export const chalk = _chalk;
-export const glob = _glob;
 
 type SetupConfig = {
   file: string;
+  /**
+   * If true, CLI will only accept a single target to run and will receive all
+   * passed arguments as is (not only flags).
+   */
+  singleTarget?: boolean;
 };
 
 /**
@@ -82,23 +94,3 @@ export const setup = async (config: SetupConfig) => {
 export const sleep = (time: number) => (
   new Promise((resolve) => setTimeout(resolve, time))
 );
-
-/**
- * Resolves a glob pattern and returns files that are safe
- * to call `stat` on.
- */
-export const resolveGlob = (globPath: string) => {
-  const unsafePaths = glob.sync(globPath, {
-    strict: false,
-    silent: true,
-  });
-  const safePaths = [];
-  for (let path of unsafePaths) {
-    try {
-      fs.statSync(path);
-      safePaths.push(path);
-    }
-    catch {}
-  }
-  return safePaths;
-};

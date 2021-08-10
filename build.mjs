@@ -3,22 +3,16 @@ import { createRequire } from 'module';
 import fs from 'fs';
 
 const require = createRequire(import.meta.url);
-const Juke = require('./.yarn/juke/index.cjs');
+const Juke = require('./.yarn/juke');
 
-process.chdir(new URL('.', import.meta.url).pathname);
-
-Juke.setup({
-  file: import.meta.url,
-});
+Juke.setup({ file: import.meta.url });
 
 const yarn = (...args) => Juke.exec('node', [
-  '.yarn/releases/yarn-3.0.0-rc.12.cjs',
+  Juke.glob('.yarn/releases/*.cjs')[0],
   ...args,
 ]);
 
-const rm = (...args) => Juke.exec('rm', args);
-
-export const YarnTarget = Juke.createTarget({
+export const YarnTarget = new Juke.Target({
   executes: async () => {
     await yarn('install');
     const pnpApi = require('./.pnp.cjs');
@@ -26,7 +20,7 @@ export const YarnTarget = Juke.createTarget({
   },
 });
 
-export const DtsTarget = Juke.createTarget({
+export const DtsTarget = new Juke.Target({
   dependsOn: [YarnTarget],
   executes: () => yarn(
     'dts-bundle-generator',
@@ -35,7 +29,7 @@ export const DtsTarget = Juke.createTarget({
   ),
 });
 
-export const BundleTarget = Juke.createTarget({
+export const BundleTarget = new Juke.Target({
   dependsOn: [YarnTarget],
   executes: async () => {
     const { build } = require('esbuild');
@@ -48,45 +42,45 @@ export const BundleTarget = Juke.createTarget({
       external: ['module'],
       plugins: [pnpPlugin()],
       entryPoints: ['src/index.ts'],
-      outfile: 'dist/index.cjs',
+      outfile: 'dist/index.js',
     });
     if (String.prototype.replaceAll) {
-      const content = fs.readFileSync('dist/index.cjs', 'utf-8')
+      const content = fs.readFileSync('dist/index.js', 'utf-8')
         .replaceAll(process.cwd() + '/.yarn/cache/', '');
-      fs.writeFileSync('dist/index.cjs', content);
+      fs.writeFileSync('dist/index.js', content);
     }
   },
 });
 
-export const TscTarget = Juke.createTarget({
+export const TscTarget = new Juke.Target({
   dependsOn: [YarnTarget],
   executes: () => yarn('tsc'),
 });
 
-export const UpdateLocalParameter = Juke.createParameter({
+export const UpdateLocalParameter = new Juke.Parameter({
   type: 'boolean',
   alias: 'u',
 });
 
-export const BuildTarget = Juke.createTarget({
+export const BuildTarget = new Juke.Target({
   dependsOn: [TscTarget, DtsTarget, BundleTarget],
   executes: async ({ get }) => {
     if (get(UpdateLocalParameter)) {
       Juke.logger.info('Updating local Juke version');
-      for (const file of ['index.cjs', 'index.d.ts']) {
+      for (const file of ['index.js', 'index.d.ts']) {
         fs.copyFileSync(`dist/${file}`, `.yarn/juke/${file}`);
       }
     }
   },
 });
 
-export const CleanTarget = Juke.createTarget({
+export const CleanTarget = new Juke.Target({
   executes: async () => {
-    await rm('-rf', '.yarn/cache');
-    await rm('-rf', '.yarn/install-state.gz');
-    await rm('-f', '.pnp.js');
-    await rm('-rf', 'dist');
-    await rm('-rf', 'node_modules');
+    await Juke.rm('.yarn/cache', { recursive: true });
+    await Juke.rm('.yarn/install-state.gz', { recursive: true });
+    await Juke.rm('.pnp.js');
+    await Juke.rm('dist', { recursive: true });
+    await Juke.rm('node_modules', { recursive: true });
   },
 });
 

@@ -9,7 +9,7 @@ export type ParameterType = (
   | boolean[]
 );
 
-export type ParameterStringType = (
+type StringType = (
   'string'
   | 'string[]'
   | 'number'
@@ -18,7 +18,7 @@ export type ParameterStringType = (
   | 'boolean[]'
 );
 
-type ParameterTypeByString<T extends ParameterStringType> = (
+type TypeByString<T extends StringType> = (
   T extends 'string' ? string :
   T extends 'string[]' ? string[] :
   T extends 'number' ? number :
@@ -30,11 +30,11 @@ type ParameterTypeByString<T extends ParameterStringType> = (
 
 export type ParameterMap = Map<Parameter, unknown[]>;
 
-export type ParameterConfig<T extends ParameterStringType> = {
+export type ParameterConfig<T extends StringType> = {
   /**
    * Parameter name, as it would be used in CLI.
    */
-  readonly name?: string;
+  name?: string;
 
   /**
    * Parameter type, one of:
@@ -45,46 +45,61 @@ export type ParameterConfig<T extends ParameterStringType> = {
    * - `boolean`
    * - `boolean[]`
    */
-  readonly type: T;
+  type: T;
 
   /**
    * Short flag for use in CLI, can only be a single character.
    */
-  readonly alias?: string;
+  alias?: string;
 };
 
-export type ParameterCreator = <T extends ParameterStringType>(
-  config: ParameterConfig<T>
-) => Parameter<ParameterTypeByString<T>>;
+export interface Parameter<T extends ParameterType = ParameterType> {
+  type: StringType;
+  name?: string;
+  alias?: string;
 
-export const createParameter: ParameterCreator = (config) => (
-  new Parameter(
-    config.name,
-    config.type,
-    config.alias)
-);
+  // Non-existent property, that is needed for type predicates to work
+  // See: https://stackoverflow.com/a/59338460
+  __internalType?: T;
 
-export class Parameter<T extends ParameterType = any> {
-  constructor(
-    public name: string | undefined,
-    public type: ParameterStringType,
-    public alias?: string,
-  ) {}
+  isString(): this is Parameter<string | string[]>;
+  isNumber(): this is Parameter<number | number[]>;
+  isBoolean(): this is Parameter<boolean | boolean[]>;
+  isArray(): this is Parameter<string[] | number[] | boolean[]>;
+  toKebabCase(): string | undefined;
+  toConstCase(): string | undefined;
+  toCamelCase(): string | undefined;
+}
 
-  isString(): T extends string | string[] ? true : false {
-    return (this.type === 'string' || this.type === 'string[]') as any;
+type ParameterCtor = {
+  new <T extends StringType>(config: ParameterConfig<T>): Parameter<TypeByString<T>>;
+};
+
+export const Parameter: ParameterCtor = class implements Parameter {
+  public type: StringType;
+  public name?: string;
+  public alias?: string;
+
+  constructor(config: ParameterConfig<any>) {
+    this.type = config.type;
+    this.name = config.name;
+    this.alias = config.alias;
   }
 
-  isNumber(): T extends number | number[] ? true : false {
-    return (this.type === 'number' || this.type === 'number[]') as any;
+  isString() {
+    return this.type === 'string' || this.type === 'string[]';
   }
 
-  isBoolean(): T extends boolean | boolean[] ? true : false {
-    return (this.type === 'boolean' || this.type === 'boolean[]') as any;
+  isNumber() {
+    return this.type === 'number' || this.type === 'number[]';
   }
 
-  isArray(): T extends Array<unknown> ? true : false {
-    return this.type.endsWith('[]') as any;
+  isBoolean() {
+    return this.type === 'boolean' || this.type === 'boolean[]';
+  }
+
+  isArray() {
+    return this.type.endsWith('[]');
   }
 
   toKebabCase() {
@@ -101,4 +116,10 @@ export class Parameter<T extends ParameterType = any> {
     if (!this.name) return;
     return toCamelCase(this.name);
   }
-}
+};
+
+export type ParameterCreator = <T extends StringType>(
+  config: ParameterConfig<T>
+) => Parameter<TypeByString<T>>;
+
+export const createParameter: ParameterCreator = (config) => new Parameter(config);

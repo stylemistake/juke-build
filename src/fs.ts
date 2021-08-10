@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { glob } from 'glob';
+import { glob as globPkg } from 'glob';
 
 export class File {
   private _stat?: fs.Stats | null;
@@ -8,7 +8,12 @@ export class File {
 
   get stat() {
     if (this._stat === undefined) {
-      this._stat = stat(this.path);
+      try {
+        this._stat = fs.statSync(this.path);
+      }
+      catch {
+        this._stat = null;
+      }
     }
     return this._stat;
   }
@@ -38,7 +43,7 @@ export class Glob {
   }
 
   toFiles() {
-    const paths = glob.sync(this.path, {
+    const paths = globPkg.sync(this.path, {
       strict: false,
       silent: true,
     });
@@ -86,34 +91,63 @@ export const compareFiles = (sources: File[], targets: File[]) => {
 };
 
 /**
- * Returns file stats for the provided path, or null if file is
- * not accessible.
+ * Unix style pathname pattern expansion.
+ *
+ * Perform a search matching a specified pattern according to the rules of
+ * the `glob` npm package. Path can be either absolute or relative, and can
+ * contain shell-style wildcards. Broken symlinks are included in the results
+ * (as in the shell). Whether or not the results are sorted depends on the
+ * file system.
+ *
+ * @returns A possibly empty list of file paths.
  */
-export const stat = (path: string) => {
-  try {
-    return fs.statSync(path);
-  }
-  catch {
-    return null;
-  }
-};
-
-/**
- * Resolves a glob pattern and returns files that are safe
- * to call `stat` on.
- */
-export const resolveGlob = (globPath: string) => {
-  const unsafePaths = glob.sync(globPath, {
+export const glob = (globPath: string) => {
+  const unsafePaths = globPkg.sync(globPath, {
     strict: false,
     silent: true,
   });
   const safePaths = [];
   for (let path of unsafePaths) {
     try {
-      fs.statSync(path);
+      fs.lstatSync(path);
       safePaths.push(path);
     }
     catch {}
   }
   return safePaths;
+};
+
+type RmOptions = {
+  /**
+   * If true, perform a recursive directory removal.
+   */
+  recursive?: boolean;
+  /**
+   * If true, exceptions will be ignored if file or directory does not exist.
+   */
+  force?: boolean;
+}
+
+/**
+ * Removes files and directories (synchronously). Supports globs.
+ */
+export const rm = (path: string, options: RmOptions = {}) => {
+  for (const p of glob(path)) {
+    try {
+      if (options.recursive && fs.rmSync) {
+        fs.rmSync(p, options);
+      }
+      else if (options.recursive) {
+        fs.rmdirSync(p, { recursive: true });
+      }
+      else {
+        fs.unlinkSync(p);
+      }
+    }
+    catch (err) {
+      if (!options.force) {
+        throw err;
+      }
+    }
+  }
 };
