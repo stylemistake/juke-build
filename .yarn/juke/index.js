@@ -4323,7 +4323,7 @@ var import_chalk4 = __toModule(require_source());
 var import_module = __toModule(require("module"));
 
 // pnp:/Users/style/Documents/Projects/juke-build/package.json
-var version = "0.7.0";
+var version = "0.8.0";
 
 // pnp:/Users/style/Documents/Projects/juke-build/src/chdir.ts
 var import_fs = __toModule(require("fs"));
