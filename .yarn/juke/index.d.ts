@@ -134,9 +134,10 @@ export declare type RunnerConfig = {
 	targets?: Target[];
 	default?: Target;
 	parameters?: Parameter[];
+	singleTarget?: boolean;
 };
 export declare const runner: {
-	defaultTarget?: Target | undefined;
+	config: RunnerConfig;
 	targets: Target[];
 	parameters: Parameter[];
 	workers: Worker[];

@@ -10,7 +10,9 @@ import url from 'url';
  */
 export const chdir = (directory: string, relativeTo?: string) => {
   if (relativeTo) {
-    relativeTo = url.fileURLToPath(relativeTo);
+    if (relativeTo.startsWith('file://')) {
+      relativeTo = url.fileURLToPath(relativeTo);
+    }
     try {
       const stat = fs.statSync(relativeTo);
       if (!stat.isDirectory()) {

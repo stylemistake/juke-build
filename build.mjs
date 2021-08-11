@@ -5,7 +5,7 @@ import fs from 'fs';
 const require = createRequire(import.meta.url);
 const Juke = require('./.yarn/juke');
 
-Juke.setup({ file: import.meta.url });
+Juke.setup({ file: import.meta.url, singleTarget: true });
 
 const yarn = (...args) => Juke.exec('node', [
   Juke.glob('.yarn/releases/*.cjs')[0],
@@ -81,6 +81,12 @@ export const CleanTarget = new Juke.Target({
     await Juke.rm('.pnp.js');
     await Juke.rm('dist', { recursive: true });
     await Juke.rm('node_modules', { recursive: true });
+  },
+});
+
+export const PrintTarget = new Juke.Target({
+  executes: async ({ args }) => {
+    console.log({ args });
   },
 });
 

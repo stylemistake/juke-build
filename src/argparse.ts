@@ -20,7 +20,7 @@ const stringToBoolean = (str?: string | null) => (
  * `[[taskName, ...taskArgs], ...]`
  * @param args List of command line arguments
  */
-export const prepareArgs = (args: string[]) => {
+export const prepareArgs = (args: string[], singleTarget = false) => {
   let inGlobalContext = true;
   const globalFlags: string[] = [];
   const taskArgs: TaskArgs[] = [];
@@ -30,10 +30,12 @@ export const prepareArgs = (args: string[]) => {
     if (!arg) {
       continue;
     }
+    // Splitter
     if (arg === '--') {
       inGlobalContext = false;
       continue;
     }
+    // Flags
     if (arg.startsWith('-')) {
       if (inGlobalContext) {
         globalFlags.push(arg);
@@ -41,14 +43,26 @@ export const prepareArgs = (args: string[]) => {
       else if (currentTaskArgs) {
         currentTaskArgs.push(arg);
       }
+      continue;
     }
-    else {
-      inGlobalContext = false;
-      if (currentTaskArgs) {
-        taskArgs.push(currentTaskArgs);
+    // Non-flags
+    inGlobalContext = false;
+    // Single target mode requires pushing all the remaining args into
+    // a single array.
+    if (singleTarget) {
+      if (!currentTaskArgs) {
+        currentTaskArgs = [arg];
       }
-      currentTaskArgs = [arg];
+      else {
+        currentTaskArgs.push(arg);
+      }
+      continue;
     }
+    // Start a new array of task args.
+    if (currentTaskArgs) {
+      taskArgs.push(currentTaskArgs);
+    }
+    currentTaskArgs = [arg];
   }
   if (currentTaskArgs) {
     taskArgs.push(currentTaskArgs);
@@ -83,6 +97,10 @@ export const parseArgs = (args: string[], parameters: Parameter[]) => {
         currentSet = Array.from(arg);
         currentSetType = 'short';
       }
+      else {
+        currentSet = [];
+        currentSetType = undefined;
+      }
     }
     const arg = currentSet.shift()!;
 
@@ -116,40 +134,42 @@ export const parseArgs = (args: string[], parameters: Parameter[]) => {
     // Parsing of long flags
     // ----------------------------------------------------
 
-    // Try to break the long flag into name/value
-    const equalsIndex = arg.indexOf('=');
-    let name = arg;
-    let value: string | null = null;
-    if (equalsIndex >= 0) {
-      name = arg.substr(0, equalsIndex);
-      value = arg.substr(equalsIndex + 1);
-      if (value === '') {
-        value = null;
+    if (currentSetType === 'long') {
+      // Try to break the long flag into name/value
+      const equalsIndex = arg.indexOf('=');
+      let name = arg;
+      let value: string | null = null;
+      if (equalsIndex >= 0) {
+        name = arg.substr(0, equalsIndex);
+        value = arg.substr(equalsIndex + 1);
+        if (value === '') {
+          value = null;
+        }
       }
-    }
-    const parameter = parameters.find((p) => (
-      p.name === name
-      || p.toKebabCase() === name
-      || p.toCamelCase() === name
-    ));
-    if (!parameter) {
+      const parameter = parameters.find((p) => (
+        p.name === name
+        || p.toKebabCase() === name
+        || p.toCamelCase() === name
+      ));
+      if (!parameter) {
+        continue;
+      }
+      if (parameter.isBoolean()) {
+        const noEqualsSign = equalsIndex < 0;
+        pushValue(parameter, noEqualsSign || stringToBoolean(value));
+        continue;
+      }
+      // Rest of parameter types expect a value
+      if (value === null) {
+        continue;
+      }
+      if (parameter.isNumber()) {
+        pushValue(parameter, parseFloat(value));
+        continue;
+      }
+      pushValue(parameter, value);
       continue;
     }
-    if (parameter.isBoolean()) {
-      const noEqualsSign = equalsIndex < 0;
-      pushValue(parameter, noEqualsSign || stringToBoolean(value));
-      continue;
-    }
-    // Rest of parameter types expect a value
-    if (value === null) {
-      continue;
-    }
-    if (parameter.isNumber()) {
-      pushValue(parameter, parseFloat(value));
-      continue;
-    }
-    pushValue(parameter, value);
-    continue;
   }
 
   // Go over the env vars and fill in the gaps

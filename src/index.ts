@@ -87,6 +87,7 @@ export const setup = async (config: SetupConfig) => {
     parameters,
     targets,
     default: DefaultTarget,
+    singleTarget: config.singleTarget,
   });
   return runner.start();
 };

@@ -4331,7 +4331,9 @@ var import_path = __toModule(require("path"));
 var import_url = __toModule(require("url"));
 var chdir = (directory, relativeTo) => {
   if (relativeTo) {
-    relativeTo = import_url.default.fileURLToPath(relativeTo);
+    if (relativeTo.startsWith("file://")) {
+      relativeTo = import_url.default.fileURLToPath(relativeTo);
+    }
     try {
       const stat = import_fs.default.statSync(relativeTo);
       if (!stat.isDirectory()) {
@@ -4419,7 +4421,7 @@ var import_events = __toModule(require("events"));
 
 // pnp:/Users/style/Documents/Projects/juke-build/src/argparse.ts
 var stringToBoolean = (str) => str !== void 0 && str !== null && str !== "false" && str !== "0" && str !== "null";
-var prepareArgs = (args) => {
+var prepareArgs = (args, singleTarget = false) => {
   let inGlobalContext = true;
   const globalFlags = [];
   const taskArgs = [];
@@ -4439,13 +4441,21 @@ var prepareArgs = (args) => {
       } else if (currentTaskArgs) {
         currentTaskArgs.push(arg);
       }
-    } else {
-      inGlobalContext = false;
-      if (currentTaskArgs) {
-        taskArgs.push(currentTaskArgs);
-      }
-      currentTaskArgs = [arg];
+      continue;
     }
+    inGlobalContext = false;
+    if (singleTarget) {
+      if (!currentTaskArgs) {
+        currentTaskArgs = [arg];
+      } else {
+        currentTaskArgs.push(arg);
+      }
+      continue;
+    }
+    if (currentTaskArgs) {
+      taskArgs.push(currentTaskArgs);
+    }
+    currentTaskArgs = [arg];
   }
   if (currentTaskArgs) {
     taskArgs.push(currentTaskArgs);
@@ -4477,16 +4487,19 @@ var parseArgs = (args, parameters) => {
       } else if (arg2.startsWith("-")) {
         currentSet = Array.from(arg2);
         currentSetType = "short";
+      } else {
+        currentSet = [];
+        currentSetType = void 0;
       }
     }
     const arg = currentSet.shift();
     if (currentSetType === "short") {
-      const parameter2 = parameters.find((p) => p.alias === arg);
-      if (!parameter2) {
+      const parameter = parameters.find((p) => p.alias === arg);
+      if (!parameter) {
         continue;
       }
-      if (parameter2.isBoolean()) {
-        pushValue(parameter2, true);
+      if (parameter.isBoolean()) {
+        pushValue(parameter, true);
         continue;
       }
       if (currentSet.length === 0) {
@@ -4494,41 +4507,43 @@ var parseArgs = (args, parameters) => {
       }
       const string = currentSet.join("");
       currentSet = [];
-      if (parameter2.isNumber()) {
-        pushValue(parameter2, parseFloat(string));
+      if (parameter.isNumber()) {
+        pushValue(parameter, parseFloat(string));
         continue;
       }
-      pushValue(parameter2, string);
+      pushValue(parameter, string);
       continue;
     }
-    const equalsIndex = arg.indexOf("=");
-    let name = arg;
-    let value = null;
-    if (equalsIndex >= 0) {
-      name = arg.substr(0, equalsIndex);
-      value = arg.substr(equalsIndex + 1);
-      if (value === "") {
-        value = null;
+    if (currentSetType === "long") {
+      const equalsIndex = arg.indexOf("=");
+      let name = arg;
+      let value = null;
+      if (equalsIndex >= 0) {
+        name = arg.substr(0, equalsIndex);
+        value = arg.substr(equalsIndex + 1);
+        if (value === "") {
+          value = null;
+        }
       }
-    }
-    const parameter = parameters.find((p) => p.name === name || p.toKebabCase() === name || p.toCamelCase() === name);
-    if (!parameter) {
+      const parameter = parameters.find((p) => p.name === name || p.toKebabCase() === name || p.toCamelCase() === name);
+      if (!parameter) {
+        continue;
+      }
+      if (parameter.isBoolean()) {
+        const noEqualsSign = equalsIndex < 0;
+        pushValue(parameter, noEqualsSign || stringToBoolean(value));
+        continue;
+      }
+      if (value === null) {
+        continue;
+      }
+      if (parameter.isNumber()) {
+        pushValue(parameter, parseFloat(value));
+        continue;
+      }
+      pushValue(parameter, value);
       continue;
     }
-    if (parameter.isBoolean()) {
-      const noEqualsSign = equalsIndex < 0;
-      pushValue(parameter, noEqualsSign || stringToBoolean(value));
-      continue;
-    }
-    if (value === null) {
-      continue;
-    }
-    if (parameter.isNumber()) {
-      pushValue(parameter, parseFloat(value));
-      continue;
-    }
-    pushValue(parameter, value);
-    continue;
   }
   for (const [key, value] of Object.entries(process.env)) {
     const parameter = parameters.find((p) => p.name === key || p.toConstCase() === key);
@@ -4786,18 +4801,19 @@ var rm = (path2, options = {}) => {
 // pnp:/Users/style/Documents/Projects/juke-build/src/runner.ts
 var runner = new class Runner {
   constructor() {
+    this.config = {};
     this.targets = [];
     this.parameters = [];
     this.workers = [];
   }
   configure(config) {
+    this.config = config;
     this.targets = config.targets || [];
     this.parameters = config.parameters || [];
-    this.defaultTarget = config.default;
   }
   async start() {
     const startedAt = Date.now();
-    const { globalFlags, taskArgs } = prepareArgs(process.argv.slice(2));
+    const { globalFlags, taskArgs } = prepareArgs(process.argv.slice(2), this.config.singleTarget);
     const globalParameterMap = parseArgs(globalFlags, this.parameters);
     const targetsToRun = new Map();
     const showListOfTargets = () => {
@@ -4825,12 +4841,12 @@ var runner = new class Runner {
       targetsToRun.set(target, { args });
     }
     if (targetsToRun.size === 0) {
-      if (!this.defaultTarget) {
+      if (!this.config.default) {
         logger.error(`No task was provided in arguments.`);
         showListOfTargets();
         process.exit(1);
       }
-      targetsToRun.set(this.defaultTarget, {
+      targetsToRun.set(this.config.default, {
         args: []
       });
     }
@@ -5081,7 +5097,8 @@ var setup = async (config) => {
   runner.configure({
     parameters,
     targets,
-    default: DefaultTarget
+    default: DefaultTarget,
+    singleTarget: config.singleTarget
   });
   return runner.start();
 };

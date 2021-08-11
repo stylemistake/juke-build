@@ -11,18 +11,19 @@ export type RunnerConfig = {
   targets?: Target[];
   default?: Target;
   parameters?: Parameter[];
+  singleTarget?: boolean;
 };
 
 export const runner = new class Runner {
-  defaultTarget?: Target;
+  config: RunnerConfig = {};
   targets: Target[] = [];
   parameters: Parameter[] = [];
   workers: Worker[] = [];
 
   configure(config: RunnerConfig) {
+    this.config = config;
     this.targets = config.targets || [];
     this.parameters = config.parameters || [];
-    this.defaultTarget = config.default;
   }
 
   async start() {
@@ -37,7 +38,10 @@ export const runner = new class Runner {
       dependsOn?: Target[];
     };
 
-    const { globalFlags, taskArgs } = prepareArgs(process.argv.slice(2));
+    const { globalFlags, taskArgs } = prepareArgs(
+      process.argv.slice(2),
+      this.config.singleTarget
+    );
     const globalParameterMap = parseArgs(globalFlags, this.parameters);
     const targetsToRun: Map<Target, TargetMeta> = new Map();
 
@@ -73,12 +77,12 @@ export const runner = new class Runner {
     }
 
     if (targetsToRun.size === 0) {
-      if (!this.defaultTarget) {
+      if (!this.config.default) {
         logger.error(`No task was provided in arguments.`);
         showListOfTargets();
         process.exit(1);
       }
-      targetsToRun.set(this.defaultTarget, {
+      targetsToRun.set(this.config.default, {
         args: [],
       });
     }

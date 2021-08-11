@@ -1,5 +1,21 @@
 # Changelog
 
+## [Unreleased]
+
+## [0.8.0] - 2021-08-11
+
+### Added
+
+- `new Juke.Target()` and `new Juke.Parameter()` constructors, which work the same way as `Juke.createTarget()` and `Juke.createParameter()` respectively. Constructors are more direct than creator functions, so using them is preferred.
+- `Juke.chdir()` was added as an easy way to change directories relative to `import.meta.url`.
+- `Juke.glob()` is now generally available for unix-style pathname pattern expansion.
+- `Juke.rm()` was added as a common file removal tool. It has a subset of Node 16 API but is compatible with Node 12, and has an built-in support for globs.
+- `Juke.setup()` accepts a `singleTarget` mode setting, which reconfigures CLI to only accept one target and treat all the remaining arguments (not only flags) as this target's arguments.
+
+### Changed
+
+- Compiled bundle was changed back to `index.js` from `index.cjs`, because the latter was not compatible with the default Node.js resolver and TypeScript could not import type definitions properly.
+
 ## [0.7.0] - 2021-07-23
 
 ### Added
