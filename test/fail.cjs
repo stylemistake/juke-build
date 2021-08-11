@@ -1,4 +1,4 @@
-const Juke = require('../dist/index.cjs');
+const Juke = require('../dist');
 
 Juke.setup({ file: __filename });
 
