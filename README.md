@@ -47,7 +47,7 @@ import Juke from './juke/index.cjs';
 Juke.setup({ file: import.meta.url });
 
 // TODO: Declare targets here
-export const MyTarget = Juke.createTarget({
+export const MyTarget = new Juke.Target({
   // ...
 });
 ```
@@ -61,7 +61,7 @@ const Juke = require('./juke');
 Juke.setup({ file: __filename });
 
 // TODO: Declare targets here
-const MyTarget = Juke.createTarget({
+const MyTarget = new Juke.Target({
   // ...
 });
 
@@ -78,7 +78,7 @@ We recommend using an ES module for the build script, because it allows exportin
 Target is a simple container for your build script that defines how it should be executed in relation to other targets. It may have dependencies on other targets, and may have various other conditions for executing the target.
 
 ```ts
-export const Target = Juke.createTarget({
+export const Target = new Juke.Target({
   executes: async () => {
     console.log('Hello, world!');
   },
@@ -88,7 +88,7 @@ export const Target = Juke.createTarget({
 > Notice: When referencing an unexported target, it must have a `name` property, which is used in CLI for specifying (and displaying) the target. If you forget to specify a `name`, it will be displayed as `undefined` during execution.
 >
 > ```ts
-> const Target = Juke.createTarget({
+> const Target = new Juke.Target({
 >   name: 'foo',
 >   // ...
 > });
@@ -99,7 +99,7 @@ export const Target = Juke.createTarget({
 ### Declare dependencies
 
 ```ts
-export const Target = Juke.createTarget({
+export const Target = new Juke.Target({
   dependsOn: [OtherTarget],
   // ...
 });
@@ -110,7 +110,7 @@ export const Target = Juke.createTarget({
 When no target is provided via CLI, Juke will execute the default target.
 
 ```ts
-export const Target = Juke.createTarget({
+export const Target = new Juke.Target({
   // ...
 });
 
@@ -126,7 +126,7 @@ If any input file is newer than the output file, target will be rebuilt, and ski
 Supports globs.
 
 ```ts
-export const Target = Juke.createTarget({
+export const Target = new Juke.Target({
   inputs: ['package.json', 'src/**/*.js'],
   outputs: ['dest/bundle.js'],
   // ...
@@ -142,12 +142,12 @@ To provide a parameter via CLI, you can either specify it by name (e.g. `--name`
 To fetch the parameter's value, you can use the `get` helper, which is exposed on the target's context.
 
 ```ts
-export const FileParameter = Juke.createParameter({
+export const FileParameter = new Juke.Parameter({
   type: 'string[]',
   alias: 'f',
 });
 
-export const Target = Juke.createTarget({
+export const Target = new Juke.Target({
   executes: async ({ get }) => {
     const files = get(FileParameter);
     console.log('Parameter values:', files);
@@ -159,7 +159,7 @@ export const Target = Juke.createTarget({
 You can also dynamically set up target dependencies using binary expressions:
 
 ```ts
-export const Target = Juke.createTarget({
+export const Target = new Juke.Target({
   dependsOn: ({ get }) => [
     get(FileParameter).includes('foo') && FooTarget,
   ],
@@ -170,7 +170,7 @@ export const Target = Juke.createTarget({
 If you simply need access to arguments passed to the target, you can use the `args` context variable. Note, that you can only pass arguments that begin with `-` or `--`, because all other arguments are normally treated as targets to build.
 
 ```ts
-export const Target = Juke.createTarget({
+export const Target = new Juke.Target({
   executes: async ({ args }) => {
     console.log('Passed arguments:', args);
   },
@@ -188,7 +188,7 @@ Context is available on these properties (when using a function syntax):
 > Notice: When referencing an unexported parameter, it must have a `name`, which is used in CLI for specifying the parameter.
 >
 > ```ts
-> const FileParameter = Juke.createParameter({
+> const FileParameter = new Juke.Parameter({
 >   name: 'file',
 > });
 > ```
@@ -203,7 +203,7 @@ If you need more control over when the target builds, you can provide a custom c
 Function can be `async` if it has to be, target will wait for all promises to resolve.
 
 ```ts
-export const Target = Juke.createTarget({
+export const Target = new Juke.Target({
   onlyWhen: ({ get }) => get(BuildModeParameter) === BUILD_ALL,
   // ...
 });
@@ -214,7 +214,7 @@ export const Target = Juke.createTarget({
 Juke provides a handy `Juke.exec` helper.
 
 ```ts
-export const Target = Juke.createTarget({
+export const Target = new Juke.Target({
   executes: async () => {
     await Juke.exec('yarn', ['install']);
   },
@@ -266,6 +266,49 @@ You can also specify parameters via the environment. Environment variable names 
 ```
 FOO=A,B ./build.js task-1
 ```
+
+### Single target mode
+
+You can specify that Juke CLI should only accept a single target to run.
+
+```ts
+Juke.setup({
+  file: import.meta.url,
+  singleTarget: true,
+});
+```
+
+This mode means that all arguments after the first task name are considered as its arguments, regardless of whether they are flags or not.
+
+```
+./build.js [globalFlags] task [argsLocalToTask]
+```
+
+### Various helpers
+
+#### `Juke.chdir(directory: string, relativeTo?: string)`
+
+Changes directory relative to another file or directory. Most commonly used as following:
+
+```ts
+Juke.chdir('..', import.meta.url);
+```
+
+#### `Juke.rm(path: string, options = {})`
+
+Removes files and directories (synchronously). Supports a small subset of Node 16 options for `fs.rmSync`. Supports globs.
+
+```ts
+Juke.rm('**/node_modules', { recursive: true });
+```
+
+#### `Juke.glob(pattern: string)`
+
+Unix style pathname pattern expansion.
+
+Performs a search matching a specified pattern according to the rules of the `glob` npm package. Path can be either absolute or relative, and can contain shell-style wildcards. Broken symlinks are included in the results (as in the shell). Whether or not the results are sorted depends on the file system.
+
+Returns a possibly empty list of file paths.
 
 ## Examples
 
