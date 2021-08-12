@@ -5,7 +5,7 @@ import { resolve as resolvePath } from 'path';
 
 const children = new Set<ChildProcess>();
 
-const killChildren = () => {
+export const killChildren = () => {
   for (const child of children) {
     child.kill('SIGTERM');
     children.delete(child);
@@ -15,7 +15,7 @@ const killChildren = () => {
 
 type SignalHandler = (signal: string) => void;
 
-const trap = (signals: string[], handler: SignalHandler) => {
+export const trap = (signals: string[], handler: SignalHandler) => {
   let readline;
   if (process.platform === 'win32') {
     readline = require('readline').createInterface({
@@ -35,25 +35,6 @@ const trap = (signals: string[], handler: SignalHandler) => {
     process.on('SIG' + signal, handleSignal);
   }
 };
-
-trap(['EXIT', 'BREAK', 'HUP', 'INT', 'TERM'], (signal) => {
-  if (signal !== 'EXIT') {
-    console.log('Received', signal);
-  }
-  killChildren();
-  if (signal !== 'EXIT') {
-    process.exit(1);
-  }
-});
-
-const exceptionHandler = (err: unknown) => {
-  console.log(err);
-  killChildren();
-  process.exit(1);
-};
-
-process.on('unhandledRejection', exceptionHandler);
-process.on('uncaughtException', exceptionHandler);
 
 export class ExitCode extends Error {
   code: number | null = null;

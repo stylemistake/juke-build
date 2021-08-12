@@ -44,11 +44,16 @@ export const BundleTarget = new Juke.Target({
       entryPoints: ['src/index.ts'],
       outfile: 'dist/index.js',
     });
-    if (String.prototype.replaceAll) {
-      const content = fs.readFileSync('dist/index.js', 'utf-8')
-        .replaceAll(process.cwd() + '/.yarn/cache/', '');
-      fs.writeFileSync('dist/index.js', content);
+    // A very crude implementation of replaceAll
+    let content = fs.readFileSync('dist/index.js', 'utf-8');
+    while (true) {
+      const nextContent = content.replace(process.cwd() + '/.yarn/cache/', '');
+      if (content === nextContent) {
+        break;
+      }
+      content = nextContent;
     }
+    fs.writeFileSync('dist/index.js', content);
   },
 });
 

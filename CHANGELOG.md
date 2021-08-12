@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.8.1] - 2021-08-12
+
+### Fixed
+
+- Juke will properly exit with a non-zero exit code if any target has failed. As before, this is overridable via `Juke.setup().then((code) => ...)`.
+
 ## [0.8.0] - 2021-08-11
 
 ### Added

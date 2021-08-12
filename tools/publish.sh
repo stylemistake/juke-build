@@ -20,7 +20,7 @@ fi
 
 if [[ ${from_git} == "0" ]]; then
   echo "=> Starting versioning tool"
-  yarn release-tool version
+  yarn release-tool version --yes
 fi
 
 echo "=> Pushing to git"

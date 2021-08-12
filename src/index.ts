@@ -2,6 +2,7 @@ import _chalk from 'chalk';
 import { createRequire } from 'module';
 import { version } from '../package.json';
 import { chdir } from './chdir';
+import { killChildren, trap } from './exec';
 import { logger } from './logger';
 import { createParameter, Parameter } from './parameter';
 import { runner } from './runner';
@@ -22,6 +23,8 @@ export {
 
 export const chalk = _chalk;
 
+let lastExitCode: number | null = null;
+
 type SetupConfig = {
   file: string;
   /**
@@ -37,7 +40,7 @@ type SetupConfig = {
  * @param config Juke Build configuration.
  * @returns Exit code of the whole runner process.
  */
-export const setup = async (config: SetupConfig) => {
+export const setup = async (config: SetupConfig): Promise<number> => {
   logger.info(`Juke Build version ${version}`)
   if (!config.file) {
     logger.error(`Field 'file' is required in Juke.setup()`);
@@ -89,9 +92,34 @@ export const setup = async (config: SetupConfig) => {
     default: DefaultTarget,
     singleTarget: config.singleTarget,
   });
-  return runner.start();
+  return runner.start().then((code) => {
+    lastExitCode = code;
+    return code;
+  });
 };
 
 export const sleep = (time: number) => (
   new Promise((resolve) => setTimeout(resolve, time))
 );
+
+trap(['EXIT', 'BREAK', 'HUP', 'INT', 'TERM'], (signal) => {
+  if (signal !== 'EXIT') {
+    console.log('Received', signal);
+  }
+  killChildren();
+  if (signal !== 'EXIT') {
+    process.exit(1);
+  }
+  else if (lastExitCode !== null) {
+    process.exit(lastExitCode);
+  }
+});
+
+const exceptionHandler = (err: unknown) => {
+  console.log(err);
+  killChildren();
+  process.exit(1);
+};
+
+process.on('unhandledRejection', exceptionHandler);
+process.on('uncaughtException', exceptionHandler);
