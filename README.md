@@ -52,6 +52,23 @@ export const MyTarget = new Juke.Target({
 });
 ```
 
+**ES modules with require:**
+
+```ts
+// build.mjs
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+const Juke = require('./juke');
+
+Juke.setup({ file: import.meta.url });
+
+// TODO: Declare targets here
+export const MyTarget = new Juke.Target({
+  // ...
+});
+```
+
 **CommonJS modules variant:**
 
 ```ts
