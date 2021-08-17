@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## [0.9.0] - 2021-08-17
+
+### Changed
+
+- `Juke.exec` now spawns processes with inherited stdio by default.
+  - This means that stdout/stderr will not be available in the return value by default, but can be changed via `captureOutput: true`.
+  - This API might be changed in the future.
+
 ## [0.8.1] - 2021-08-12
 
 ### Fixed

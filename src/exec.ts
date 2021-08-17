@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import { ChildProcess, spawn, SpawnOptionsWithoutStdio } from 'child_process';
+import { ChildProcess, spawn, SpawnOptions } from 'child_process';
 import fs from 'fs';
 import { resolve as resolvePath } from 'path';
 
@@ -47,7 +47,7 @@ export class ExitCode extends Error {
   }
 }
 
-export type ExecOptions = SpawnOptionsWithoutStdio & {
+export type ExecOptions = SpawnOptions & {
   /**
    * If `true`, this exec call will not pipe its output to stdio.
    * @default false
@@ -58,6 +58,11 @@ export type ExecOptions = SpawnOptionsWithoutStdio & {
    * @default true
    */
   throw?: boolean;
+  /**
+   * Captures stdout/stderr to be available in exec return value.
+   * This is experimental functionality.
+   */
+  captureOutput?: boolean;
 };
 
 export type ExecReturn = {
@@ -93,25 +98,32 @@ export const exec = (
     if (process.env.JUKE_DEBUG) {
       console.log(chalk.grey('$', executable, ...args));
     }
-    const child = spawn(executable, args, spawnOptions);
+    const child = spawn(executable, args, {
+      stdio: 'inherit',
+      ...spawnOptions,
+    });
     children.add(child);
     let stdout = '';
     let stderr = '';
     let combined = '';
-    child.stdout.on('data', (data) => {
-      if (!silent) {
-        process.stdout.write(data);
-      }
-      stdout += data;
-      combined += data;
-    });
-    child.stderr.on('data', (data) => {
-      if (!silent) {
-        process.stderr.write(data);
-      }
-      stderr += data;
-      combined += data;
-    });
+    if (child.stdout) {
+      child.stdout.on('data', (data) => {
+        if (!silent) {
+          process.stdout.write(data);
+        }
+        stdout += data;
+        combined += data;
+      });
+    }
+    if (child.stderr) {
+      child.stderr.on('data', (data) => {
+        if (!silent) {
+          process.stderr.write(data);
+        }
+        stderr += data;
+        combined += data;
+      });
+    }
     child.on('error', (err) => reject(err));
     child.on('exit', (code, signal) => {
       children.delete(child);
