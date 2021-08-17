@@ -4323,7 +4323,7 @@ var import_chalk4 = __toModule(require_source());
 var import_module = __toModule(require("module"));
 
 // pnp:/Users/style/Documents/Projects/juke-build/package.json
-var version = "0.8.1";
+var version = "0.9.0";
 
 // pnp:/Users/style/Documents/Projects/juke-build/src/chdir.ts
 var import_fs = __toModule(require("fs"));
@@ -4404,25 +4404,31 @@ var exec = (executable, args = [], options = {}) => {
     if (process.env.JUKE_DEBUG) {
       console.log(import_chalk.default.grey("$", executable, ...args));
     }
-    const child = (0, import_child_process.spawn)(executable, args, spawnOptions);
+    const child = (0, import_child_process.spawn)(executable, args, __spreadValues({
+      stdio: "inherit"
+    }, spawnOptions));
     children.add(child);
     let stdout = "";
     let stderr = "";
     let combined = "";
-    child.stdout.on("data", (data) => {
-      if (!silent) {
-        process.stdout.write(data);
-      }
-      stdout += data;
-      combined += data;
-    });
-    child.stderr.on("data", (data) => {
-      if (!silent) {
-        process.stderr.write(data);
-      }
-      stderr += data;
-      combined += data;
-    });
+    if (child.stdout) {
+      child.stdout.on("data", (data) => {
+        if (!silent) {
+          process.stdout.write(data);
+        }
+        stdout += data;
+        combined += data;
+      });
+    }
+    if (child.stderr) {
+      child.stderr.on("data", (data) => {
+        if (!silent) {
+          process.stderr.write(data);
+        }
+        stderr += data;
+        combined += data;
+      });
+    }
     child.on("error", (err) => reject(err));
     child.on("exit", (code, signal) => {
       children.delete(child);
