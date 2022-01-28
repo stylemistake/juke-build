@@ -1,6 +1,6 @@
 ![JUKE build](https://github.com/stylemistake/juke-build/blob/master/assets/juke-build.png)
 
-> The AKE-less General Purpose Build System with JavaScript DSL for Node.js platform.
+> General Purpose Build System with JavaScript DSL for Node.js.
 > Inspired by [NUKE](https://nuke.build/).
 
 This project is reaching a mature stage, although a lot of features are still in development. Take a look at our [roadmap](https://github.com/stylemistake/juke-build/projects/1).
